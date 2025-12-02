@@ -93,7 +93,7 @@ class ColumnEditor {
         this.container.innerHTML = '';
 
         // Update Output JSON
-        this.output.innerText = JSON.stringify(this.data, null, 2);
+        this.output.innerHTML = this.renderJsonHtml(this.data);
 
         // Render Breadcrumbs
         this.renderBreadcrumbs();
@@ -115,6 +115,43 @@ class ColumnEditor {
                 break;
             }
         }
+    }
+
+    renderJsonHtml(data, path = []) {
+        // Simple recursive JSON renderer to generate HTML with data-path attributes
+        if (data === null) return `<span class="json-value type-null">null</span>`;
+        if (typeof data === 'string') return `<span class="json-value type-string">"${data}"</span>`;
+        if (typeof data === 'number') return `<span class="json-value type-number">${data}</span>`;
+        if (typeof data === 'boolean') return `<span class="json-value type-boolean">${data}</span>`;
+
+        const isArray = Array.isArray(data);
+        const openChar = isArray ? '[' : '{';
+        const closeChar = isArray ? ']' : '}';
+        const keys = Object.keys(data);
+
+        if (keys.length === 0) return `${openChar}${closeChar}`;
+
+        let html = `${openChar}\n`;
+        keys.forEach((key, index) => {
+            const currentPath = [...path, isArray ? Number(key) : key];
+            const pathStr = JSON.stringify(currentPath);
+            const value = data[key];
+            const isLast = index === keys.length - 1;
+            const comma = isLast ? '' : ',';
+
+            // Indentation
+            const indent = '  '.repeat(path.length + 1);
+
+            // Key (only for objects)
+            const keyHtml = isArray ? '' : `<span class="json-key">"${key}"</span>: `;
+
+            // Value
+            const valueHtml = this.renderJsonHtml(value, currentPath);
+
+            html += `<div class="json-line" data-path='${pathStr}'>${indent}${keyHtml}${valueHtml}${comma}</div>`;
+        });
+        html += `${'  '.repeat(path.length)}${closeChar}`;
+        return html;
     }
 
     renderBreadcrumbs() {
@@ -189,7 +226,7 @@ class ColumnEditor {
 
         // If array, use indices. If object, use keys.
         keys.forEach(key => {
-            const fullPath = [...path, key];
+            const fullPath = [...path, Array.isArray(dataContext) ? Number(key) : key];
             const value = dataContext[key];
             const valueType = this.getType(value);
             const isComplex = valueType === 'object' || valueType === 'array';
@@ -199,6 +236,24 @@ class ColumnEditor {
 
             const row = document.createElement('div');
             row.className = 'row';
+            row.setAttribute('data-path', JSON.stringify(fullPath));
+
+            // Sync Highlight: Hover on Row -> Highlight JSON Line
+            row.onmouseenter = () => {
+                const pathStr = JSON.stringify(fullPath);
+                const jsonLine = document.querySelector(`.json-line[data-path='${pathStr}']`);
+                if (jsonLine) {
+                    jsonLine.classList.add('highlight');
+                    jsonLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            };
+            row.onmouseleave = () => {
+                const pathStr = JSON.stringify(fullPath);
+                const jsonLine = document.querySelector(`.json-line[data-path='${pathStr}']`);
+                if (jsonLine) {
+                    jsonLine.classList.remove('highlight');
+                }
+            };
 
             // Check active state
             const isSelected = this.selectionPath.length > path.length &&
@@ -343,7 +398,7 @@ class ColumnEditor {
                 // We slice the current selection path to the depth of this column
                 // This handles "switching siblings" correctly
                 const newPath = this.selectionPath.slice(0, path.length);
-                newPath.push(key);
+                newPath.push(Array.isArray(dataContext) ? Number(key) : key);
 
                 this.selectionPath = newPath;
                 this.render();
@@ -376,6 +431,30 @@ class ColumnEditor {
 // --- Init ---
 const editor = new ColumnEditor('editor-container', 'output-pane', initialData, schema);
 
+// Sync Highlight: Hover on JSON Line -> Highlight Miller Row
+document.getElementById('output-pane').addEventListener('mouseover', (e) => {
+    const line = e.target.closest('.json-line');
+    if (line) {
+        const pathStr = line.getAttribute('data-path');
+        const row = document.querySelector(`.row[data-path='${pathStr}']`);
+        if (row) {
+            row.style.backgroundColor = 'rgba(255, 255, 0, 0.2)'; // Temporary highlight
+        }
+    }
+});
+
+document.getElementById('output-pane').addEventListener('mouseout', (e) => {
+    const line = e.target.closest('.json-line');
+    if (line) {
+        const pathStr = line.getAttribute('data-path');
+        const row = document.querySelector(`.row[data-path='${pathStr}']`);
+        if (row) {
+            row.style.backgroundColor = ''; // Remove temporary highlight
+        }
+    }
+});
+
+
 function copyJson() {
     navigator.clipboard.writeText(JSON.stringify(editor.data, null, 2));
     alert("JSON copied to clipboard");
@@ -403,5 +482,18 @@ function updateTheme() {
     } else {
         document.documentElement.setAttribute('data-theme', 'light');
         themeBtn.innerText = '☀️ Light Mode';
+    }
+}
+
+// Toggle Code View Logic
+function toggleCodeView() {
+    const outputPane = document.getElementById('output-pane');
+    const btn = document.getElementById('toggle-code-btn');
+    outputPane.classList.toggle('collapsed');
+
+    if (outputPane.classList.contains('collapsed')) {
+        btn.innerText = 'Show Code';
+    } else {
+        btn.innerText = 'Hide Code';
     }
 }

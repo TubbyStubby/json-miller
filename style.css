@@ -297,6 +297,37 @@ select:focus {
     white-space: pre-wrap;
     color: var(--text);
     box-shadow: -4px 0 10px rgba(0, 0, 0, 0.05);
+    transition: width 0.3s ease, padding 0.3s ease;
+}
+
+#output-pane.collapsed {
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+    border-left: none;
+}
+
+.json-line {
+    display: block;
+    font-family: 'Fira Code', monospace;
+    white-space: pre;
+    padding: 0 4px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.json-line:hover {
+    background: rgba(var(--accent), 0.1);
+}
+
+.json-line.highlight {
+    background: rgba(255, 255, 0, 0.2);
+    /* Yellowish highlight */
+    border-left: 2px solid var(--accent);
+}
+
+[data-theme="dark"] .json-line.highlight {
+    background: rgba(255, 255, 0, 0.1);
 }
 
 /* Arrows for complex types */
