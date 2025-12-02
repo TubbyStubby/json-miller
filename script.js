@@ -550,9 +550,16 @@ class ColumnEditor {
             addBtn.innerText = "+ Add Item";
             addBtn.className = "add-item-btn"; // Use new ghost button class
             addBtn.onclick = () => {
-                // Default to string, logic could be smarter based on schema items
                 const newPath = [...path, dataContext.length];
-                this.setValueAt(newPath, "");
+
+                // Determine default value from schema
+                let defaultValue = "";
+                const currentSchema = this.getSchemaForPath(path);
+                if (currentSchema && currentSchema.items) {
+                    defaultValue = this.getDefaultValue(currentSchema.items);
+                }
+
+                this.setValueAt(newPath, defaultValue);
             };
             col.appendChild(addBtn);
         }
