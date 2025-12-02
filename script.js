@@ -356,28 +356,46 @@ class ColumnEditor {
                     nullTxt.style.fontStyle = "italic";
                     inputWrapper.appendChild(nullTxt);
                 } else {
-                    const input = document.createElement('input');
-                    input.type = valueType === 'number' ? 'number' : 'text';
-                    input.value = value;
+                    const isLongText = valueType === 'string' && String(value).length > 60;
+
+                    let input;
+                    if (isLongText) {
+                        input = document.createElement('textarea');
+                        input.value = value;
+                        input.rows = 3; // Start with a reasonable height
+                        // Auto-expand on input
+                        input.oninput = (e) => {
+                            this.focusedPath = fullPath;
+                            this.focusedSelection = { start: e.target.selectionStart, end: e.target.selectionEnd };
+                            this.setValueAt(fullPath, e.target.value);
+                            e.target.style.height = 'auto';
+                            e.target.style.height = (e.target.scrollHeight) + 'px';
+                        };
+                    } else {
+                        input = document.createElement('input');
+                        input.type = valueType === 'number' ? 'number' : 'text';
+                        input.value = value;
+
+                        input.oninput = (e) => {
+                            this.focusedPath = fullPath;
+                            if (input.type === 'text') {
+                                this.focusedSelection = { start: e.target.selectionStart, end: e.target.selectionEnd };
+                            }
+                            const val = valueType === 'number' ? parseFloat(e.target.value) : e.target.value;
+                            this.setValueAt(fullPath, val);
+                        };
+                    }
 
                     // Restore focus if this was the element being edited
                     if (this.focusedPath && JSON.stringify(this.focusedPath) === JSON.stringify(fullPath)) {
                         setTimeout(() => {
                             input.focus();
-                            if (this.focusedSelection && input.type === 'text') {
+                            if (this.focusedSelection && input.type !== 'number') {
                                 input.setSelectionRange(this.focusedSelection.start, this.focusedSelection.end);
                             }
                         }, 0);
                     }
 
-                    input.oninput = (e) => {
-                        this.focusedPath = fullPath;
-                        if (input.type === 'text') {
-                            this.focusedSelection = { start: e.target.selectionStart, end: e.target.selectionEnd };
-                        }
-                        const val = valueType === 'number' ? parseFloat(e.target.value) : e.target.value;
-                        this.setValueAt(fullPath, val);
-                    };
                     inputWrapper.appendChild(input);
                 }
                 row.appendChild(inputWrapper);
@@ -392,7 +410,10 @@ class ColumnEditor {
             // Click Handling for Drill-down
             row.onclick = (e) => {
                 // Don't drill down if clicking inputs directly
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+                if (e.target.tagName === 'INPUT' ||
+                    e.target.tagName === 'SELECT' ||
+                    e.target.tagName === 'TEXTAREA' ||
+                    e.target.closest('.input-wrapper')) return;
 
                 // Update path
                 // We slice the current selection path to the depth of this column
@@ -401,6 +422,10 @@ class ColumnEditor {
                 newPath.push(Array.isArray(dataContext) ? Number(key) : key);
 
                 this.selectionPath = newPath;
+
+                // Clear focused path on navigation to prevent jumping back to previous input
+                this.focusedPath = null;
+
                 this.render();
             };
 
@@ -412,7 +437,7 @@ class ColumnEditor {
         if (Array.isArray(dataContext)) {
             const addBtn = document.createElement('button');
             addBtn.innerText = "+ Add Item";
-            addBtn.style.margin = "10px";
+            addBtn.className = "add-item-btn"; // Use new ghost button class
             addBtn.onclick = () => {
                 // Default to string, logic could be smarter based on schema items
                 const newPath = [...path, dataContext.length];
