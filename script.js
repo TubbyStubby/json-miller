@@ -16,12 +16,42 @@ class ColumnEditor {
         this.output = document.getElementById(outputId);
         this.data = data;
         this.rootSchema = schema;
+        this.selectionPath = []; // Array of keys/indices
 
-        // Track the path of selected objects: [] -> root, ['metadata'] -> metadata obj
-        this.selectionPath = [];
+        // Init AJV
+        this._loadAjv();
+
         this.focusedPath = null;
         this.focusedSelection = null;
 
+        this.init();
+    }
+
+    _loadAjv() {
+        const Ajv = window.ajv7.Ajv;
+        if (Ajv && window.ajvFormats) {
+            this._ajv = window.ajvFormats.default(new Ajv({ allErrors: true }));
+            this._validateFn = this._ajv.compile(this.rootSchema);
+        } else {
+            console.error("AJV not loaded");
+        }
+    }
+
+    get ajv() {
+        if (!this._ajv) {
+            this._loadAjv();
+        }
+        return this._ajv;
+    }
+
+    get validateFn() {
+        if (!this._validateFn) {
+            this._loadAjv();
+        }
+        return this._validateFn;
+    }
+
+    init() {
         this.render();
     }
 
@@ -93,33 +123,29 @@ class ColumnEditor {
         return parentSchema.required.includes(key);
     }
 
-    validate(data, schema, path = []) {
+    validate(data) {
         const errors = new Set();
-        if (!schema) return errors;
+        if (!this.validateFn) return errors;
 
-        // Check required fields for objects
-        if (schema.type === 'object' && schema.required) {
-            schema.required.forEach(reqKey => {
-                if (data === undefined || data[reqKey] === undefined) {
-                    errors.add(JSON.stringify([...path, reqKey]));
+        const valid = this.validateFn(data);
+        if (!valid) {
+            this.validateFn.errors.forEach(err => {
+                // AJV instancePath is like "/match_config/rewards/win/0/_id"
+                // We need to convert it to path array: ["match_config", "rewards", "win", 0, "_id"]
+                const pathStr = err.instancePath;
+                console.log("found error at", pathStr);
+                if (pathStr) {
+                    const parts = pathStr.split('/').filter(p => p !== "");
+                    const pathArray = parts.map(p => {
+                        return isNaN(p) ? p : Number(p);
+                    });
+                    errors.add(JSON.stringify(pathArray));
+                } else {
+                    // Root error
+                    errors.add(JSON.stringify([]));
                 }
             });
         }
-
-        // Recursively validate children
-        if (typeof data === 'object' && data !== null) {
-            Object.keys(data).forEach(key => {
-                const value = data[key];
-                const currentPath = [...path, Array.isArray(data) ? Number(key) : key];
-                const childSchema = this.getSchemaForPath(currentPath);
-
-                if (childSchema) {
-                    const childErrors = this.validate(value, childSchema, currentPath);
-                    childErrors.forEach(e => errors.add(e));
-                }
-            });
-        }
-
         return errors;
     }
 
@@ -173,7 +199,7 @@ class ColumnEditor {
         this.renderBreadcrumbs();
 
         // Run validation once to get all errors
-        const validationErrors = this.validate(this.data, this.rootSchema);
+        const validationErrors = this.validate(this.data);
 
         // Always render root level
         this.renderColumn([], this.data, validationErrors);

@@ -29,6 +29,13 @@
         <div id="output-pane"></div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ajv/8.17.1/ajv7.bundle.min.js"
+        integrity="sha512-qRe8bjiTECWi8HUTdrC46oVVFzfG746FB/6QkIcQdoRG16NNlAaNMCAYPBNxiqVoQTjIbYZTDLXUmdcmghVUjQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="module">
+        import ajvFormats from 'https://cdn.jsdelivr.net/npm/ajv-formats@3.0.1/+esm';
+        window.ajvFormats = ajvFormats.default;
+    </script>
     <script src="script.js"></script>
 </body>
 
