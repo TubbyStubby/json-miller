@@ -52,7 +52,16 @@ class ColumnEditor {
     }
 
     init() {
-        this.render();
+        // Wait for AJV to load
+        const checkAjv = () => {
+            if (window.ajv7 && window.ajvFormats) {
+                this._loadAjv();
+                this.render();
+            } else {
+                setTimeout(checkAjv, 50);
+            }
+        };
+        checkAjv();
     }
 
     // --- Data Helpers ---
