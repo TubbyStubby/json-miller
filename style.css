@@ -146,6 +146,35 @@ header {
     opacity: 0.8;
 }
 
+/* Side-by-side layout for scalar fields */
+.row.scalar-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.row.scalar-row .row-header {
+    margin-bottom: 0;
+    flex: 0 0 40%;
+    /* Label takes ~40% width */
+    max-width: 140px;
+    overflow: hidden;
+}
+
+.row.scalar-row .key-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.row.scalar-row .input-wrapper {
+    flex: 1;
+    width: auto;
+    /* Let flex handle width */
+}
+
 /* Inputs */
 .input-wrapper {
     display: flex;

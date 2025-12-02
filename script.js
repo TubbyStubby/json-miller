@@ -142,6 +142,7 @@ class ColumnEditor {
             const isSelected = this.selectionPath.length > path.length &&
                 this.selectionPath[path.length] == key; // strict eq for array indices
             if (isSelected) row.classList.add('active');
+            if (!isComplex) row.classList.add('scalar-row');
 
             // 1. Header Row (Key Name + Type Selector)
             const rowHeader = document.createElement('div');
