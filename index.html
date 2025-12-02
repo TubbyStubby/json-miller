@@ -1,482 +1,412 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schema-Driven Column JSON Editor</title>
     <style>
-        :root {
-            --bg: #1e1e1e;
-            --col-bg: #252526;
-            --border: #3e3e42;
-            --text: #d4d4d4;
-            --accent: #007acc;
-            --hover: #2a2d2e;
-            --active-row: #37373d;
-            --input-bg: #3c3c3c;
-        }
-
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* Layout */
-        header {
-            padding: 10px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #2d2d2d;
-        }
-
-        #editor-container {
-            display: flex;
-            flex: 1;
-            overflow-x: auto;
-            overflow-y: hidden;
-            scroll-behavior: smooth;
-        }
-
-        /* Columns */
-        .column {
-            width: 300px;
-            min-width: 300px;
-            border-right: 1px solid var(--border);
-            background: var(--col-bg);
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .column-header {
-            padding: 10px;
-            font-weight: bold;
-            border-bottom: 1px solid var(--border);
-            color: #888;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-        }
-
-        /* Rows */
-        .row {
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            transition: background 0.1s;
-        }
-
-        .row:hover { background: var(--hover); }
-        .row.active { background: var(--active-row); border-left: 3px solid var(--accent); }
-
-        .row-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 4px;
-        }
-
-        .key-label { font-weight: 500; font-size: 0.9rem; }
-        .type-badge {
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: #444;
-            color: #aaa;
-        }
-
-        /* Inputs */
-        .input-wrapper { display: flex; gap: 5px; align-items: center; }
-
-        input, select {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 4px 8px;
-            border-radius: 3px;
-            width: 100%;
-            font-size: 0.9rem;
-        }
-
-        input:focus { outline: 1px solid var(--accent); }
-
-        /* Output Pane */
-        #output-pane {
-            width: 350px;
-            border-left: 1px solid var(--border);
-            padding: 20px;
-            background: #111;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.85rem;
-            white-space: pre-wrap;
-        }
-
-        /* Arrows for complex types */
-        .arrow { margin-left: auto; color: #666; font-size: 0.8rem; }
-        .row.active .arrow { color: var(--accent); }
-
+        @import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,slnt,wdth,wght,GRAD,ROND@6..144,-10..0,25..151,1..1000,0..100,0..100&display=swap');
     </style>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<header>
-    <h3>Miller Column JSON Editor</h3>
-    <button onclick="copyJson()" style="padding: 5px 15px; cursor:pointer;">Copy JSON</button>
-</header>
+    <header>
+        <h3>Miller Column JSON Editor</h3>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="toggleTheme()" id="theme-btn">🌙 Dark Mode</button>
+            <button onclick="copyJson()">Copy JSON</button>
+        </div>
+    </header>
 
-<div style="display: flex; flex: 1; height: 100%;">
-    <div id="editor-container"></div>
-    <div id="output-pane"></div>
-</div>
+    <div style="display: flex; flex: 1; height: 100%;">
+        <div id="editor-container"></div>
+        <div id="output-pane"></div>
+    </div>
 
-<script>
-    /**
-     * INITIAL DATA & SCHEMA
-     */
-    const initialData = {
-        title: "Project Alpha",
-        active: true,
-        metadata: {
-            created: "2023-01-01",
-            author: {
-                name: "Jane Doe",
-                role: "admin"
-            }
-        },
-        tags: ["feature", "urgent", 101],
-        settings: null
-    };
-
-    const schema = {
-        type: "object",
-        properties: {
-            title: { type: "string" },
-            active: { type: "boolean" },
-            count: { type: "number" },
+    <script>
+        /**
+         * INITIAL DATA & SCHEMA
+         */
+        const initialData = {
+            title: "Project Alpha",
+            active: true,
             metadata: {
-                type: "object",
-                properties: {
-                    created: { type: "string" },
-                    author: {
-                        type: "object",
-                        properties: {
-                            name: { type: "string" },
-                            role: { type: "string", enum: ["admin", "editor", "viewer"] }
+                created: "2023-01-01",
+                author: {
+                    name: "Jane Doe",
+                    role: "admin"
+                }
+            },
+            tags: ["feature", "urgent", 101],
+            settings: null
+        };
+
+        const schema = {
+            type: "object",
+            properties: {
+                title: { type: "string" },
+                active: { type: "boolean" },
+                count: { type: "number" },
+                metadata: {
+                    type: "object",
+                    properties: {
+                        created: { type: "string" },
+                        author: {
+                            type: "object",
+                            properties: {
+                                name: { type: "string" },
+                                role: { type: "string", enum: ["admin", "editor", "viewer"] }
+                            }
                         }
                     }
-                }
-            },
-            tags: {
-                type: "array",
-                items: {
+                },
+                tags: {
+                    type: "array",
+                    items: {
+                        oneOf: [
+                            { type: "string" },
+                            { type: "number" }
+                        ]
+                    }
+                },
+                settings: {
                     oneOf: [
-                        { type: "string" },
-                        { type: "number" }
+                        { type: "null" },
+                        {
+                            type: "object",
+                            properties: { theme: { type: "string" } }
+                        }
                     ]
                 }
-            },
-            settings: {
-                oneOf: [
-                    { type: "null" },
-                    {
-                        type: "object",
-                        properties: { theme: { type: "string" } }
-                    }
-                ]
             }
-        }
-    };
+        };
 
-    /**
-     * CORE EDITOR CLASS
-     */
-    class ColumnEditor {
-        constructor(containerId, outputId, data, schema) {
-            this.container = document.getElementById(containerId);
-            this.output = document.getElementById(outputId);
-            this.data = data;
-            this.rootSchema = schema;
+        /**
+         * CORE EDITOR CLASS
+         */
+        class ColumnEditor {
+            constructor(containerId, outputId, data, schema) {
+                this.container = document.getElementById(containerId);
+                this.output = document.getElementById(outputId);
+                this.data = data;
+                this.rootSchema = schema;
 
-            // Track the path of selected objects: [] -> root, ['metadata'] -> metadata obj
-            this.selectionPath = [];
+                // Track the path of selected objects: [] -> root, ['metadata'] -> metadata obj
+                this.selectionPath = [];
+                this.focusedPath = null;
+                this.focusedSelection = null;
 
-            this.render();
-        }
-
-        // --- Data Helpers ---
-
-        getValueAt(path) {
-            return path.reduce((acc, key) => (acc && acc[key] !== undefined) ? acc[key] : undefined, this.data);
-        }
-
-        setValueAt(path, value) {
-            if (path.length === 0) {
-                this.data = value;
-            } else {
-                const lastKey = path[path.length - 1];
-                const parentPath = path.slice(0, -1);
-                const parent = this.getValueAt(parentPath);
-                parent[lastKey] = value;
+                this.render();
             }
-            this.render();
-        }
 
-        getType(value) {
-            if (value === null) return 'null';
-            if (Array.isArray(value)) return 'array';
-            return typeof value;
-        }
+            // --- Data Helpers ---
 
-        // --- Schema Inference ---
-
-        getSchemaForPath(path) {
-            let currentSchema = this.rootSchema;
-
-            for (let key of path) {
-                if (!currentSchema) return null;
-
-                // Handle Array items
-                if (currentSchema.type === 'array' && !isNaN(key)) {
-                    currentSchema = currentSchema.items;
-                    continue;
-                }
-
-                // Handle Object properties
-                if (currentSchema.properties && currentSchema.properties[key]) {
-                    currentSchema = currentSchema.properties[key];
-                    continue;
-                }
-
-                // Fallback for generic objects
-                return null;
+            getValueAt(path) {
+                return path.reduce((acc, key) => (acc && acc[key] !== undefined) ? acc[key] : undefined, this.data);
             }
-            return currentSchema;
-        }
 
-        getAvailableTypes(schemaNode) {
-            if (!schemaNode) return ['string', 'number', 'boolean', 'object', 'array', 'null'];
-
-            if (schemaNode.oneOf) {
-                return schemaNode.oneOf.map(s => s.type);
-            }
-            if (schemaNode.type) {
-                return Array.isArray(schemaNode.type) ? schemaNode.type : [schemaNode.type];
-            }
-            return ['string']; // Default
-        }
-
-        // --- Rendering ---
-
-        render() {
-            this.container.innerHTML = '';
-
-            // Update Output JSON
-            this.output.innerText = JSON.stringify(this.data, null, 2);
-
-            // Always render root level
-            this.renderColumn([], this.data);
-
-            // Render subsequent columns based on selectionPath
-            let currentPath = [];
-            for (const key of this.selectionPath) {
-                currentPath.push(key);
-                const value = this.getValueAt(currentPath);
-
-                // Only render next column if value is complex (obj/arr) and exists
-                if (value && typeof value === 'object') {
-                    this.renderColumn([...currentPath], value);
+            setValueAt(path, value) {
+                if (path.length === 0) {
+                    this.data = value;
                 } else {
-                    // Path is invalid or leads to primitive, stop rendering deeper
-                    break;
+                    const lastKey = path[path.length - 1];
+                    const parentPath = path.slice(0, -1);
+                    const parent = this.getValueAt(parentPath);
+                    parent[lastKey] = value;
+                }
+                this.render();
+            }
+
+            getType(value) {
+                if (value === null) return 'null';
+                if (Array.isArray(value)) return 'array';
+                return typeof value;
+            }
+
+            // --- Schema Inference ---
+
+            getSchemaForPath(path) {
+                let currentSchema = this.rootSchema;
+
+                for (let key of path) {
+                    if (!currentSchema) return null;
+
+                    // Handle Array items
+                    if (currentSchema.type === 'array' && !isNaN(key)) {
+                        currentSchema = currentSchema.items;
+                        continue;
+                    }
+
+                    // Handle Object properties
+                    if (currentSchema.properties && currentSchema.properties[key]) {
+                        currentSchema = currentSchema.properties[key];
+                        continue;
+                    }
+
+                    // Fallback for generic objects
+                    return null;
+                }
+                return currentSchema;
+            }
+
+            getAvailableTypes(schemaNode) {
+                if (!schemaNode) return ['string', 'number', 'boolean', 'object', 'array', 'null'];
+
+                if (schemaNode.oneOf) {
+                    return schemaNode.oneOf.map(s => s.type);
+                }
+                if (schemaNode.type) {
+                    return Array.isArray(schemaNode.type) ? schemaNode.type : [schemaNode.type];
+                }
+                return ['string']; // Default
+            }
+
+            // --- Rendering ---
+
+            render() {
+                this.container.innerHTML = '';
+
+                // Update Output JSON
+                this.output.innerText = JSON.stringify(this.data, null, 2);
+
+                // Always render root level
+                this.renderColumn([], this.data);
+
+                // Render subsequent columns based on selectionPath
+                let currentPath = [];
+                for (const key of this.selectionPath) {
+                    currentPath.push(key);
+                    const value = this.getValueAt(currentPath);
+
+                    // Only render next column if value is complex (obj/arr) and exists
+                    if (value && typeof value === 'object') {
+                        this.renderColumn([...currentPath], value);
+                    } else {
+                        // Path is invalid or leads to primitive, stop rendering deeper
+                        break;
+                    }
                 }
             }
-        }
 
-        renderColumn(path, dataContext) {
-            const col = document.createElement('div');
-            col.className = 'column';
+            renderColumn(path, dataContext) {
+                const col = document.createElement('div');
+                col.className = 'column';
 
-            const header = document.createElement('div');
-            header.className = 'column-header';
-            header.innerText = path.length === 0 ? 'ROOT' : path[path.length-1];
-            col.appendChild(header);
+                const header = document.createElement('div');
+                header.className = 'column-header';
+                header.innerText = path.length === 0 ? 'ROOT' : path[path.length - 1];
+                col.appendChild(header);
 
-            const keys = Object.keys(dataContext);
+                const keys = Object.keys(dataContext);
 
-            // If array, use indices. If object, use keys.
-            keys.forEach(key => {
-                const fullPath = [...path, key];
-                const value = dataContext[key];
-                const valueType = this.getType(value);
-                const isComplex = valueType === 'object' || valueType === 'array';
+                // If array, use indices. If object, use keys.
+                keys.forEach(key => {
+                    const fullPath = [...path, key];
+                    const value = dataContext[key];
+                    const valueType = this.getType(value);
+                    const isComplex = valueType === 'object' || valueType === 'array';
 
-                // Determine schema for this specific field
-                const fieldSchema = this.getSchemaForPath(fullPath);
+                    // Determine schema for this specific field
+                    const fieldSchema = this.getSchemaForPath(fullPath);
 
-                const row = document.createElement('div');
-                row.className = 'row';
+                    const row = document.createElement('div');
+                    row.className = 'row';
 
-                // Check active state
-                const isSelected = this.selectionPath.length > path.length &&
-                                   this.selectionPath[path.length] == key; // strict eq for array indices
-                if (isSelected) row.classList.add('active');
+                    // Check active state
+                    const isSelected = this.selectionPath.length > path.length &&
+                        this.selectionPath[path.length] == key; // strict eq for array indices
+                    if (isSelected) row.classList.add('active');
 
-                // 1. Header Row (Key Name + Type Selector)
-                const rowHeader = document.createElement('div');
-                rowHeader.className = 'row-header';
+                    // 1. Header Row (Key Name + Type Selector)
+                    const rowHeader = document.createElement('div');
+                    rowHeader.className = 'row-header';
 
-                const label = document.createElement('span');
-                label.className = 'key-label';
-                label.innerText = key;
+                    const label = document.createElement('span');
+                    label.className = 'key-label';
+                    label.innerText = key;
 
-                // Type Switcher Logic
-                const allowedTypes = this.getAvailableTypes(fieldSchema);
-                const typeBadge = document.createElement('select');
-                typeBadge.className = 'type-badge';
-                typeBadge.style.width = 'auto';
+                    // Type Switcher Logic
+                    const allowedTypes = this.getAvailableTypes(fieldSchema);
+                    const typeBadge = document.createElement('select');
+                    typeBadge.className = 'type-badge';
+                    typeBadge.style.width = 'auto';
 
-                allowedTypes.forEach(t => {
-                    const opt = document.createElement('option');
-                    opt.value = t;
-                    opt.innerText = t;
-                    if(t === valueType) opt.selected = true;
-                    typeBadge.appendChild(opt);
+                    allowedTypes.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t;
+                        opt.innerText = t;
+                        if (t === valueType) opt.selected = true;
+                        typeBadge.appendChild(opt);
+                    });
+
+                    // Handle Type Change
+                    typeBadge.onchange = (e) => {
+                        const newType = e.target.value;
+                        let newValue;
+                        if (newType === 'string') newValue = "";
+                        else if (newType === 'number') newValue = 0;
+                        else if (newType === 'boolean') newValue = false;
+                        else if (newType === 'object') newValue = {};
+                        else if (newType === 'array') newValue = [];
+                        else if (newType === 'null') newValue = null;
+
+                        this.setValueAt(fullPath, newValue);
+                        e.stopPropagation();
+                    };
+
+                    rowHeader.appendChild(label);
+
+                    // Only show type selector if strictly multiple types or generic
+                    if (allowedTypes.length > 1 || !fieldSchema) {
+                        rowHeader.appendChild(typeBadge);
+                    } else {
+                        const staticBadge = document.createElement('span');
+                        staticBadge.className = 'type-badge';
+                        staticBadge.innerText = valueType;
+                        rowHeader.appendChild(staticBadge);
+                    }
+
+                    row.appendChild(rowHeader);
+
+                    // 2. Input Area
+                    if (!isComplex) {
+                        const inputWrapper = document.createElement('div');
+                        inputWrapper.className = 'input-wrapper';
+
+                        if (valueType === 'boolean') {
+                            const cb = document.createElement('input');
+                            cb.type = 'checkbox';
+                            cb.checked = value;
+                            cb.onchange = (e) => this.setValueAt(fullPath, e.target.checked);
+                            cb.style.width = "20px";
+                            inputWrapper.appendChild(cb);
+                        } else if (fieldSchema && fieldSchema.enum) {
+                            const sel = document.createElement('select');
+                            fieldSchema.enum.forEach(optVal => {
+                                const opt = document.createElement('option');
+                                opt.value = optVal;
+                                opt.innerText = optVal;
+                                if (optVal === value) opt.selected = true;
+                                sel.appendChild(opt);
+                            });
+                            sel.onchange = (e) => this.setValueAt(fullPath, e.target.value);
+                            inputWrapper.appendChild(sel);
+                        } else if (valueType === 'null') {
+                            const nullTxt = document.createElement('span');
+                            nullTxt.innerText = "null";
+                            nullTxt.style.color = "#666";
+                            nullTxt.style.fontStyle = "italic";
+                            inputWrapper.appendChild(nullTxt);
+                        } else {
+                            const input = document.createElement('input');
+                            input.type = valueType === 'number' ? 'number' : 'text';
+                            input.value = value;
+
+                            // Restore focus if this was the element being edited
+                            if (this.focusedPath && JSON.stringify(this.focusedPath) === JSON.stringify(fullPath)) {
+                                setTimeout(() => {
+                                    input.focus();
+                                    if (this.focusedSelection && input.type === 'text') {
+                                        input.setSelectionRange(this.focusedSelection.start, this.focusedSelection.end);
+                                    }
+                                }, 0);
+                            }
+
+                            input.oninput = (e) => {
+                                this.focusedPath = fullPath;
+                                if (input.type === 'text') {
+                                    this.focusedSelection = { start: e.target.selectionStart, end: e.target.selectionEnd };
+                                }
+                                const val = valueType === 'number' ? parseFloat(e.target.value) : e.target.value;
+                                this.setValueAt(fullPath, val);
+                            };
+                            inputWrapper.appendChild(input);
+                        }
+                        row.appendChild(inputWrapper);
+                    } else {
+                        // It's complex, add arrow indicator
+                        const arrow = document.createElement('span');
+                        arrow.className = 'arrow';
+                        arrow.innerText = '▶';
+                        rowHeader.appendChild(arrow);
+                    }
+
+                    // Click Handling for Drill-down
+                    row.onclick = (e) => {
+                        // Don't drill down if clicking inputs directly
+                        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+                        // Update path
+                        // We slice the current selection path to the depth of this column
+                        // This handles "switching siblings" correctly
+                        const newPath = this.selectionPath.slice(0, path.length);
+                        newPath.push(key);
+
+                        this.selectionPath = newPath;
+                        this.render();
+                    };
+
+                    col.appendChild(row);
                 });
 
-                // Handle Type Change
-                typeBadge.onchange = (e) => {
-                    const newType = e.target.value;
-                    let newValue;
-                    if (newType === 'string') newValue = "";
-                    else if (newType === 'number') newValue = 0;
-                    else if (newType === 'boolean') newValue = false;
-                    else if (newType === 'object') newValue = {};
-                    else if (newType === 'array') newValue = [];
-                    else if (newType === 'null') newValue = null;
-
-                    this.setValueAt(fullPath, newValue);
-                    e.stopPropagation();
-                };
-
-                rowHeader.appendChild(label);
-
-                // Only show type selector if strictly multiple types or generic
-                if(allowedTypes.length > 1 || !fieldSchema) {
-                     rowHeader.appendChild(typeBadge);
-                } else {
-                     const staticBadge = document.createElement('span');
-                     staticBadge.className = 'type-badge';
-                     staticBadge.innerText = valueType;
-                     rowHeader.appendChild(staticBadge);
+                // Add "Add Property" button for Objects or Arrays
+                // (Simplified for this demo: supports Arrays)
+                if (Array.isArray(dataContext)) {
+                    const addBtn = document.createElement('button');
+                    addBtn.innerText = "+ Add Item";
+                    addBtn.style.margin = "10px";
+                    addBtn.onclick = () => {
+                        // Default to string, logic could be smarter based on schema items
+                        const newPath = [...path, dataContext.length];
+                        this.setValueAt(newPath, "");
+                    };
+                    col.appendChild(addBtn);
                 }
 
-                row.appendChild(rowHeader);
+                this.container.appendChild(col);
 
-                // 2. Input Area
-                if (!isComplex) {
-                    const inputWrapper = document.createElement('div');
-                    inputWrapper.className = 'input-wrapper';
-
-                    if (valueType === 'boolean') {
-                        const cb = document.createElement('input');
-                        cb.type = 'checkbox';
-                        cb.checked = value;
-                        cb.onchange = (e) => this.setValueAt(fullPath, e.target.checked);
-                        cb.style.width = "20px";
-                        inputWrapper.appendChild(cb);
-                    } else if (fieldSchema && fieldSchema.enum) {
-                        const sel = document.createElement('select');
-                        fieldSchema.enum.forEach(optVal => {
-                            const opt = document.createElement('option');
-                            opt.value = optVal;
-                            opt.innerText = optVal;
-                            if(optVal === value) opt.selected = true;
-                            sel.appendChild(opt);
-                        });
-                        sel.onchange = (e) => this.setValueAt(fullPath, e.target.value);
-                        inputWrapper.appendChild(sel);
-                    } else if (valueType === 'null') {
-                        const nullTxt = document.createElement('span');
-                        nullTxt.innerText = "null";
-                        nullTxt.style.color = "#666";
-                        nullTxt.style.fontStyle = "italic";
-                        inputWrapper.appendChild(nullTxt);
-                    } else {
-                        const input = document.createElement('input');
-                        input.type = valueType === 'number' ? 'number' : 'text';
-                        input.value = value;
-                        input.oninput = (e) => {
-                            const val = valueType === 'number' ? parseFloat(e.target.value) : e.target.value;
-                            this.setValueAt(fullPath, val);
-                        };
-                        inputWrapper.appendChild(input);
-                    }
-                    row.appendChild(inputWrapper);
-                } else {
-                    // It's complex, add arrow indicator
-                    const arrow = document.createElement('span');
-                    arrow.className = 'arrow';
-                    arrow.innerText = '▶';
-                    rowHeader.appendChild(arrow);
-                }
-
-                // Click Handling for Drill-down
-                row.onclick = (e) => {
-                    // Don't drill down if clicking inputs directly
-                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-
-                    // Update path
-                    // We slice the current selection path to the depth of this column
-                    // This handles "switching siblings" correctly
-                    const newPath = this.selectionPath.slice(0, path.length);
-                    newPath.push(key);
-
-                    this.selectionPath = newPath;
-                    this.render();
-                };
-
-                col.appendChild(row);
-            });
-
-            // Add "Add Property" button for Objects or Arrays
-            // (Simplified for this demo: supports Arrays)
-            if (Array.isArray(dataContext)) {
-                 const addBtn = document.createElement('button');
-                 addBtn.innerText = "+ Add Item";
-                 addBtn.style.margin = "10px";
-                 addBtn.onclick = () => {
-                     // Default to string, logic could be smarter based on schema items
-                     const newPath = [...path, dataContext.length];
-                     this.setValueAt(newPath, "");
-                 };
-                 col.appendChild(addBtn);
+                // Scroll to right most column
+                this.container.scrollLeft = this.container.scrollWidth;
             }
-
-            this.container.appendChild(col);
-
-            // Scroll to right most column
-            this.container.scrollLeft = this.container.scrollWidth;
         }
-    }
 
-    // --- Init ---
-    const editor = new ColumnEditor('editor-container', 'output-pane', initialData, schema);
+        // --- Init ---
+        const editor = new ColumnEditor('editor-container', 'output-pane', initialData, schema);
 
-    function copyJson() {
-        navigator.clipboard.writeText(JSON.stringify(editor.data, null, 2));
-        alert("JSON copied to clipboard");
-    }
+        function copyJson() {
+            navigator.clipboard.writeText(JSON.stringify(editor.data, null, 2));
+            alert("JSON copied to clipboard");
+        }
 
-</script>
+        // Theme Toggle Logic
+        const themeBtn = document.getElementById('theme-btn');
+        let isDark = true;
+
+        // Check system preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            isDark = false;
+        }
+        updateTheme();
+
+        function toggleTheme() {
+            isDark = !isDark;
+            updateTheme();
+        }
+
+        function updateTheme() {
+            if (isDark) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeBtn.innerText = '🌙 Dark Mode';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeBtn.innerText = '☀️ Light Mode';
+            }
+        }
+
+    </script>
 </body>
+
 </html>

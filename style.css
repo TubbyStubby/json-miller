@@ -1,0 +1,236 @@
+:root {
+    /* Base variables - Dark Mode (Default) */
+    --bg: #202124;
+    /* Google Dark Grey */
+    --col-bg: #2d2e31;
+    --border: #3c4043;
+    --text: #e8eaed;
+    --accent: #8ab4f8;
+    /* Soft Blue */
+    --accent-active: #f28b82;
+    /* Soft Pastel Red/Coral - easier on eyes than #ef233c */
+    --hover: #303134;
+    --active-row: #3c4043;
+    --input-bg: #303134;
+    --header-bg: #202124;
+    --output-bg: #202124;
+    --border-radius: 16px;
+    /* Slightly more rounded */
+    --shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] {
+    --bg: #f0f2f5;
+    /* Light Grey - darker than previous cream to reduce brightness */
+    --col-bg: #ffffff;
+    --border: #dadce0;
+    --text: #202124;
+    --accent: #1a73e8;
+    --accent-active: #fce8e6;
+    /* Very soft red background for active */
+    --hover: #f1f3f4;
+    --active-row: #e8f0fe;
+    /* Soft blue for active row in light mode */
+    --input-bg: #f1f3f4;
+    --header-bg: #ffffff;
+    --output-bg: #ffffff;
+}
+
+body {
+    margin: 0;
+    font-family: "Google Sans Flex", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-variation-settings: "GRAD" 0, "slnt" 0, "wdth" 100, "wght" 400;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* Layout */
+header {
+    padding: 15px 25px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--header-bg);
+    box-shadow: var(--shadow);
+    z-index: 10;
+}
+
+#editor-container {
+    display: flex;
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    padding: 20px;
+    gap: 15px;
+    /* Spacing between columns */
+}
+
+/* Columns */
+.column {
+    width: 320px;
+    min-width: 320px;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    background: var(--col-bg);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow);
+}
+
+.column-header {
+    padding: 15px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    opacity: 0.7;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+/* Rows */
+.row {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.row:last-child {
+    border-bottom: none;
+}
+
+.row:hover {
+    background: var(--hover);
+}
+
+.row.active {
+    background: var(--active-row);
+    border-left: 4px solid var(--accent);
+    /* Changed to use accent color instead of accent-active for border */
+}
+
+.row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.key-label {
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.type-badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background: var(--input-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    opacity: 0.8;
+}
+
+/* Inputs */
+.input-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+input,
+select {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 8px;
+    width: 100%;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+    font-family: inherit;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* Output Pane */
+#output-pane {
+    width: 400px;
+    border-left: 1px solid var(--border);
+    padding: 25px;
+    background: var(--output-bg);
+    overflow-y: auto;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    color: var(--text);
+    box-shadow: -4px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Arrows for complex types */
+.arrow {
+    margin-left: auto;
+    color: var(--text);
+    opacity: 0.5;
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+}
+
+.row.active .arrow {
+    color: var(--accent);
+    opacity: 1;
+    transform: translateX(2px);
+}
+
+/* Buttons */
+button {
+    background: var(--accent);
+    color: var(--bg);
+    /* Contrast text */
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 0.2s;
+    font-family: inherit;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
