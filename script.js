@@ -79,7 +79,7 @@ class ColumnEditor {
             const parent = this.getValueAt(parentPath);
             parent[lastKey] = value;
         }
-        this.render();
+        this.render({ preserveScroll: true });
     }
 
     getType(value) {
@@ -100,7 +100,7 @@ class ColumnEditor {
         } else {
             delete parent[lastKey];
         }
-        this.render();
+        this.render({ preserveScroll: true });
     }
 
     getDefaultValue(schema) {
@@ -198,7 +198,10 @@ class ColumnEditor {
 
     // --- Rendering ---
 
-    render() {
+    render(options = {}) {
+        const preserveScroll = options.preserveScroll || false;
+        const previousScrollLeft = this.container.scrollLeft;
+
         this.container.innerHTML = '';
 
         // Update Output JSON
@@ -227,6 +230,13 @@ class ColumnEditor {
                 // Path is invalid or leads to primitive, stop rendering deeper
                 break;
             }
+        }
+
+        // Handle scrolling
+        if (preserveScroll) {
+            this.container.scrollLeft = previousScrollLeft;
+        } else {
+            this.container.scrollLeft = this.container.scrollWidth;
         }
     }
 
@@ -686,8 +696,8 @@ class ColumnEditor {
 
         this.container.appendChild(col);
 
-        // Scroll to right most column
-        this.container.scrollLeft = this.container.scrollWidth;
+        // Scroll to right most column - MOVED TO RENDER()
+        // this.container.scrollLeft = this.container.scrollWidth;
     }
 }
 
