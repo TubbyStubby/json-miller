@@ -218,12 +218,24 @@ class ColumnEditor {
             const allowedTypes = this.getAvailableTypes(fieldSchema);
             const typeBadge = document.createElement('select');
             typeBadge.className = 'type-badge';
-            typeBadge.style.width = 'auto';
+
+            // Icon Map
+            const typeIcons = {
+                'string': 'abc',
+                'number': '#',
+                'boolean': '?',
+                'object': '{}',
+                'array': '[]',
+                'null': '∅'
+            };
+
+            // Apply color class based on current type
+            typeBadge.classList.add(`type-${valueType}`);
 
             allowedTypes.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t;
-                opt.innerText = t;
+                opt.innerText = typeIcons[t] || t; // Use icon if available
                 if (t === valueType) opt.selected = true;
                 typeBadge.appendChild(opt);
             });
@@ -250,8 +262,8 @@ class ColumnEditor {
                 rowHeader.appendChild(typeBadge);
             } else {
                 const staticBadge = document.createElement('span');
-                staticBadge.className = 'type-badge';
-                staticBadge.innerText = valueType;
+                staticBadge.className = `type-badge type-${valueType}`;
+                staticBadge.innerText = typeIcons[valueType] || valueType;
                 rowHeader.appendChild(staticBadge);
             }
 
@@ -268,6 +280,8 @@ class ColumnEditor {
                     cb.checked = value;
                     cb.onchange = (e) => this.setValueAt(fullPath, e.target.checked);
                     cb.style.width = "20px";
+                    // Remove bottom border for checkbox
+                    cb.style.borderBottom = "none";
                     inputWrapper.appendChild(cb);
                 } else if (fieldSchema && fieldSchema.enum) {
                     const sel = document.createElement('select');

@@ -171,14 +171,58 @@ header {
     font-size: 0.95rem;
 }
 
+/* Data Type Colors */
+
+/* Greenish */
+.type-string {
+    color: #5db075;
+}
+
+/* Orange */
+.type-number {
+    color: #f2a53d;
+}
+
+/* Purple */
+.type-boolean {
+    color: #a4508b;
+}
+
+/* Blue */
+.type-object {
+    color: #4285f4;
+}
+
+/* Yellow/Gold */
+.type-array {
+    color: #fbbc04;
+}
+
+/* Grey */
+.type-null {
+    color: #9aa0a6;
+}
+
 .type-badge {
-    font-size: 0.75rem;
-    padding: 4px 8px;
-    border-radius: 12px;
-    background: var(--input-bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    opacity: 0.8;
+    font-size: 0.85rem;
+    padding: 4px 6px;
+    border-radius: 6px;
+    background: transparent;
+    /* Remove background */
+    border: 1px solid transparent;
+    /* Remove border or make transparent */
+    font-family: 'Fira Code', monospace;
+    font-weight: bold;
+    cursor: pointer;
+    appearance: none;
+    /* Remove default select arrow if possible, or style it */
+    -webkit-appearance: none;
+    text-align: center;
+    min-width: 24px;
+}
+
+.type-badge:hover {
+    background: rgba(0, 0, 0, 0.05);
 }
 
 /* Side-by-side layout for scalar fields */
