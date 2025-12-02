@@ -1,41 +1,35 @@
 :root {
     /* Base variables - Dark Mode (Default) */
     --bg: #202124;
-    /* Google Dark Grey */
     --col-bg: #2d2e31;
     --border: #3c4043;
     --text: #e8eaed;
     --accent: #8ab4f8;
-    /* Soft Blue */
     --accent-active: #f28b82;
-    /* Soft Pastel Red/Coral - easier on eyes than #ef233c */
     --hover: #303134;
     --active-row: #3c4043;
     --input-bg: #303134;
     --header-bg: #202124;
     --output-bg: #202124;
     --border-radius: 16px;
-    /* Slightly more rounded */
     --shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 [data-theme="light"] {
     --bg: #f0f2f5;
-    /* Light Grey - darker than previous cream to reduce brightness */
     --col-bg: #ffffff;
     --border: #dadce0;
     --text: #202124;
     --accent: #1a73e8;
     --accent-active: #fce8e6;
-    /* Very soft red background for active */
     --hover: #f1f3f4;
     --active-row: #e8f0fe;
-    /* Soft blue for active row in light mode */
     --input-bg: #f1f3f4;
     --header-bg: #ffffff;
     --output-bg: #ffffff;
 }
 
+/* Demo Page Styles (Global) */
 body {
     margin: 0;
     font-family: "Google Sans Flex", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -49,7 +43,6 @@ body {
     transition: background 0.3s, color 0.3s;
 }
 
-/* Layout */
 header {
     padding: 15px 25px;
     border-bottom: 1px solid var(--border);
@@ -61,14 +54,36 @@ header {
     z-index: 10;
 }
 
+header button {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 0.2s;
+    font-family: inherit;
+}
+
+header button:hover {
+    opacity: 0.9;
+}
+
+/* --- JsonMiller Library Styles --- */
+
 .json-miller-container {
     display: flex;
     flex-direction: column;
     height: 100%;
     overflow: hidden;
+    font-family: "Google Sans Flex", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    /* Ensure font is inherited or set */
+    color: var(--text);
+    /* Ensure text color is applied */
 }
 
-.jm-breadcrumbs {
+.json-miller-container .jm-breadcrumbs {
     padding: 10px 25px;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
@@ -80,37 +95,37 @@ header {
     white-space: nowrap;
 }
 
-.breadcrumb-item {
+.json-miller-container .breadcrumb-item {
     cursor: pointer;
     color: var(--accent);
     margin-right: 5px;
 }
 
-.breadcrumb-item:hover {
+.json-miller-container .breadcrumb-item:hover {
     text-decoration: underline;
 }
 
-.breadcrumb-item.active {
+.json-miller-container .breadcrumb-item.active {
     color: var(--text);
     cursor: default;
     font-weight: 500;
     pointer-events: none;
 }
 
-.breadcrumb-separator {
+.json-miller-container .breadcrumb-separator {
     margin: 0 8px;
     color: var(--text);
     opacity: 0.5;
 }
 
-.jm-workspace {
+.json-miller-container .jm-workspace {
     display: flex;
     flex: 1;
     min-height: 0;
     overflow: hidden;
 }
 
-.jm-editor {
+.json-miller-container .jm-editor {
     display: flex;
     flex: 1;
     overflow-x: auto;
@@ -118,11 +133,10 @@ header {
     scroll-behavior: smooth;
     padding: 20px;
     gap: 15px;
-    /* Spacing between columns */
 }
 
 /* Columns */
-.column {
+.json-miller-container .column {
     width: 320px;
     min-width: 320px;
     border: 1px solid var(--border);
@@ -134,7 +148,7 @@ header {
     box-shadow: var(--shadow);
 }
 
-.column-header {
+.json-miller-container .column-header {
     padding: 15px;
     font-weight: 500;
     border-bottom: 1px solid var(--border);
@@ -147,160 +161,145 @@ header {
 }
 
 /* Rows */
-.row {
+.json-miller-container .row {
     display: flex;
     flex-direction: column;
     padding: 12px 15px;
     border-bottom: 1px solid var(--border);
     cursor: pointer;
     transition: all 0.2s ease;
+    position: relative;
+    padding-right: 35px;
 }
 
-.row:last-child {
+.json-miller-container .row:last-child {
     border-bottom: none;
 }
 
-.row:hover {
+.json-miller-container .row:hover {
     background: var(--hover);
 }
 
-.row.active {
+.json-miller-container .row.active {
     background: var(--active-row);
     border-left: 4px solid var(--accent);
     box-shadow: inset 0 0 0 1px var(--accent);
-    /* Add a subtle inner border */
     font-weight: 500;
-    /* Make text slightly bolder */
 }
 
-.row-header {
+.json-miller-container .row-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
 }
 
-.key-label {
+.json-miller-container .key-label {
     font-weight: 500;
     font-size: 0.95rem;
 }
 
 /* Data Type Colors */
-
-/* Greenish */
-.type-string {
+.json-miller-container .type-string {
     color: #5db075;
 }
 
-/* Orange */
-.type-number {
+.json-miller-container .type-number {
     color: #f2a53d;
 }
 
-/* Purple */
-.type-boolean {
+.json-miller-container .type-boolean {
     color: #a4508b;
 }
 
-/* Blue */
-.type-object {
+.json-miller-container .type-object {
     color: #4285f4;
 }
 
-/* Yellow/Gold */
-.type-array {
+.json-miller-container .type-array {
     color: #fbbc04;
 }
 
-/* Grey */
-.type-null {
+.json-miller-container .type-null {
     color: #9aa0a6;
 }
 
-.type-badge {
+.json-miller-container .type-badge {
     font-size: 0.85rem;
     padding: 4px 6px;
     border-radius: 6px;
     background: transparent;
-    /* Remove background */
     border: 1px solid transparent;
-    /* Remove border or make transparent */
     font-family: 'Fira Code', monospace;
     font-weight: bold;
     cursor: pointer;
     appearance: none;
-    /* Remove default select arrow if possible, or style it */
     -webkit-appearance: none;
     text-align: center;
     min-width: 24px;
 }
 
-.type-badge:hover {
+.json-miller-container .type-badge:hover {
     background: rgba(0, 0, 0, 0.05);
 }
 
 /* Side-by-side layout for scalar fields */
-.row.scalar-row {
+.json-miller-container .row.scalar-row {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
 }
 
-.row.scalar-row .row-header {
+.json-miller-container .row.scalar-row .row-header {
     margin-bottom: 0;
     flex: 0 0 40%;
-    /* Label takes ~40% width */
     max-width: 140px;
     overflow: hidden;
 }
 
-.row.scalar-row .key-label {
+.json-miller-container .row.scalar-row .key-label {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     display: block;
 }
 
-.row.scalar-row .input-wrapper {
+.json-miller-container .row.scalar-row .input-wrapper {
     flex: 1;
     width: auto;
-    /* Let flex handle width */
 }
 
 /* Inputs */
-.input-wrapper {
+.json-miller-container .input-wrapper {
     display: flex;
     gap: 8px;
     align-items: center;
 }
 
-input,
-select {
+.json-miller-container input,
+.json-miller-container select {
     background: transparent;
     border: none;
     border-bottom: 1px solid var(--border);
     color: var(--text);
     padding: 8px 0;
-    /* Remove side padding for cleaner look */
     border-radius: 0;
-    /* Remove border radius */
     width: 100%;
     font-size: 0.9rem;
     transition: border-color 0.2s, background 0.2s;
     font-family: inherit;
 }
 
-input:focus,
-select:focus {
+.json-miller-container input:focus,
+.json-miller-container select:focus {
     outline: none;
     border-bottom: 2px solid var(--accent);
     background: rgba(var(--accent), 0.05);
-    /* Slight background on focus */
 }
 
 /* Output Pane */
-.jm-output {
+.json-miller-container .jm-output {
     width: 400px;
     border-left: 1px solid var(--border);
     padding: 25px;
@@ -314,14 +313,14 @@ select:focus {
     transition: width 0.3s ease, padding 0.3s ease;
 }
 
-.jm-output.collapsed {
+.json-miller-container .jm-output.collapsed {
     width: 0;
     padding: 0;
     overflow: hidden;
     border-left: none;
 }
 
-.json-line {
+.json-miller-container .json-line {
     display: block;
     font-family: 'Fira Code', monospace;
     white-space: pre;
@@ -330,22 +329,21 @@ select:focus {
     cursor: pointer;
 }
 
-.json-line:hover {
+.json-miller-container .json-line:hover {
     background: rgba(var(--accent), 0.1);
 }
 
-.json-line.highlight {
+.json-miller-container .json-line.highlight {
     background: rgba(255, 255, 0, 0.2);
-    /* Yellowish highlight */
     border-left: 2px solid var(--accent);
 }
 
-[data-theme="dark"] .json-line.highlight {
+[data-theme="dark"] .json-miller-container .json-line.highlight {
     background: rgba(255, 255, 0, 0.1);
 }
 
 /* Arrows for complex types */
-.arrow {
+.json-miller-container .arrow {
     margin-left: auto;
     color: var(--text);
     opacity: 0.5;
@@ -353,17 +351,16 @@ select:focus {
     transition: transform 0.2s;
 }
 
-.row.active .arrow {
+.json-miller-container .row.active .arrow {
     color: var(--accent);
     opacity: 1;
     transform: translateX(2px);
 }
 
 /* Buttons */
-button {
+.json-miller-container button {
     background: var(--accent);
     color: var(--bg);
-    /* Contrast text */
     border: none;
     padding: 8px 16px;
     border-radius: 20px;
@@ -373,31 +370,31 @@ button {
     font-family: inherit;
 }
 
-button:hover {
+.json-miller-container button:hover {
     opacity: 0.9;
 }
 
 /* Scrollbar styling */
-::-webkit-scrollbar {
+.json-miller-container ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
-::-webkit-scrollbar-track {
+.json-miller-container ::-webkit-scrollbar-track {
     background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
+.json-miller-container ::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
+.json-miller-container ::-webkit-scrollbar-thumb:hover {
     background: var(--accent);
 }
 
 /* Ghost Button for "Add Item" */
-.add-item-btn {
+.json-miller-container .add-item-btn {
     background: transparent;
     border: 1px dashed var(--accent);
     color: var(--accent);
@@ -407,14 +404,14 @@ button:hover {
     transition: all 0.2s;
 }
 
-.add-item-btn:hover {
+.json-miller-container .add-item-btn:hover {
     background: rgba(var(--accent), 0.1);
     opacity: 1;
     border-style: solid;
 }
 
 /* Textarea for long text */
-textarea {
+.json-miller-container textarea {
     background: transparent;
     border: none;
     border-bottom: 1px solid var(--border);
@@ -428,17 +425,16 @@ textarea {
     min-height: 24px;
     line-height: 1.4;
     display: block;
-    /* Ensure it takes full width */
 }
 
-textarea:focus {
+.json-miller-container textarea:focus {
     outline: none;
     border-bottom: 2px solid var(--accent);
     background: rgba(var(--accent), 0.05);
 }
 
 /* Optional Fields: "+ Property" Button */
-.add-property-btn {
+.json-miller-container .add-property-btn {
     background: transparent;
     border: 1px dotted var(--text);
     color: var(--text);
@@ -450,14 +446,14 @@ textarea:focus {
     padding: 6px 12px;
 }
 
-.add-property-btn:hover {
+.json-miller-container .add-property-btn:hover {
     opacity: 1;
     background: rgba(0, 0, 0, 0.05);
     border-style: solid;
 }
 
 /* Property Dropdown (Popover) */
-.property-dropdown {
+.json-miller-container .property-dropdown {
     position: absolute;
     background: var(--col-bg);
     border: 1px solid var(--border);
@@ -469,7 +465,7 @@ textarea:focus {
     animation: fadeIn 0.1s ease-out;
 }
 
-.property-dropdown-item {
+.json-miller-container .property-dropdown-item {
     padding: 8px 12px;
     cursor: pointer;
     font-size: 0.9rem;
@@ -477,7 +473,7 @@ textarea:focus {
     transition: background 0.2s;
 }
 
-.property-dropdown-item:hover {
+.json-miller-container .property-dropdown-item:hover {
     background: var(--hover);
 }
 
@@ -494,7 +490,7 @@ textarea:focus {
 }
 
 /* Deletion: Hover-to-Reveal Trash Icon */
-.delete-btn {
+.json-miller-container .delete-btn {
     position: absolute;
     right: 10px;
     top: 50%;
@@ -503,27 +499,24 @@ textarea:focus {
     border: none;
     color: var(--text);
     opacity: 0;
-    /* Hidden by default */
     cursor: pointer;
     font-size: 1.1rem;
     padding: 4px;
     transition: all 0.2s;
     pointer-events: none;
-    /* Prevent interaction when hidden */
 }
 
-.row:hover .delete-btn {
+.json-miller-container .row:hover .delete-btn {
     opacity: 0.4;
     pointer-events: auto;
 }
 
-.delete-btn:hover {
+.json-miller-container .delete-btn:hover {
     opacity: 1 !important;
     color: #ef233c;
-    /* Red on hover */
 }
 
-.delete-btn.confirm {
+.json-miller-container .delete-btn.confirm {
     opacity: 1 !important;
     color: #ef233c;
     animation: shake 0.3s;
@@ -551,27 +544,17 @@ textarea:focus {
     }
 }
 
-/* Adjust row to make space for delete button */
-.row {
-    position: relative;
-    /* For absolute positioning of delete btn */
-    padding-right: 35px;
-    /* Make space */
-}
-
 /* Required Fields */
-.key-label.required {
+.json-miller-container .key-label.required {
     font-weight: 700;
-    /* Bold */
 }
 
-.key-label.optional {
+.json-miller-container .key-label.optional {
     font-weight: 400;
-    /* Normal */
 }
 
 /* Lock Icon */
-.lock-icon {
+.json-miller-container .lock-icon {
     position: absolute;
     right: 10px;
     top: 50%;
@@ -581,32 +564,29 @@ textarea:focus {
     font-size: 0.9rem;
     cursor: not-allowed;
     pointer-events: none;
-    /* No interaction */
 }
 
 /* Validation Errors */
-.row.has-error {
+.json-miller-container .row.has-error {
     border-left: 4px solid #ef233c;
-    /* Red border */
     background: rgba(239, 35, 60, 0.05);
 }
 
-.row.child-error {
-    /* Subtle indication that a child has an error */
+.json-miller-container .row.child-error {
     border-left: 4px solid rgba(239, 35, 60, 0.4);
 }
 
-.row.has-error .key-label,
-.row.child-error .key-label {
+.json-miller-container .row.has-error .key-label,
+.json-miller-container .row.child-error .key-label {
     color: #ef233c;
 }
 
-.input-error {
+.json-miller-container .input-error {
     border-bottom: 2px solid #ef233c !important;
 }
 
-/* Tooltip for Lock (Simple CSS implementation) */
-.lock-icon:hover::after {
+/* Tooltip for Lock */
+.json-miller-container .lock-icon:hover::after {
     content: "Required field";
     position: absolute;
     right: 20px;
