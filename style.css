@@ -118,7 +118,10 @@ header {
 .row.active {
     background: var(--active-row);
     border-left: 4px solid var(--accent);
-    /* Changed to use accent color instead of accent-active for border */
+    box-shadow: inset 0 0 0 1px var(--accent);
+    /* Add a subtle inner border */
+    font-weight: 500;
+    /* Make text slightly bolder */
 }
 
 .row-header {
@@ -152,21 +155,26 @@ header {
 
 input,
 select {
-    background: var(--input-bg);
-    border: 1px solid var(--border);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
     color: var(--text);
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: 8px 0;
+    /* Remove side padding for cleaner look */
+    border-radius: 0;
+    /* Remove border radius */
     width: 100%;
     font-size: 0.9rem;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, background 0.2s;
     font-family: inherit;
 }
 
 input:focus,
 select:focus {
     outline: none;
-    border-color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+    background: rgba(var(--accent), 0.05);
+    /* Slight background on focus */
 }
 
 /* Output Pane */
