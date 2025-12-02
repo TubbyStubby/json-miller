@@ -61,7 +61,14 @@ header {
     z-index: 10;
 }
 
-#breadcrumbs {
+.json-miller-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.jm-breadcrumbs {
     padding: 10px 25px;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
@@ -96,7 +103,14 @@ header {
     opacity: 0.5;
 }
 
-#editor-container {
+.jm-workspace {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.jm-editor {
     display: flex;
     flex: 1;
     overflow-x: auto;
@@ -286,7 +300,7 @@ select:focus {
 }
 
 /* Output Pane */
-#output-pane {
+.jm-output {
     width: 400px;
     border-left: 1px solid var(--border);
     padding: 25px;
@@ -300,7 +314,7 @@ select:focus {
     transition: width 0.3s ease, padding 0.3s ease;
 }
 
-#output-pane.collapsed {
+.jm-output.collapsed {
     width: 0;
     padding: 0;
     overflow: hidden;
