@@ -49,6 +49,35 @@ class ColumnEditor {
         return typeof value;
     }
 
+    deleteValueAt(path) {
+        if (path.length === 0) return; // Cannot delete root
+
+        const lastKey = path[path.length - 1];
+        const parentPath = path.slice(0, -1);
+        const parent = this.getValueAt(parentPath);
+
+        if (Array.isArray(parent)) {
+            parent.splice(Number(lastKey), 1);
+        } else {
+            delete parent[lastKey];
+        }
+        this.render();
+    }
+
+    getDefaultValue(schema) {
+        if (!schema) return "";
+        if (schema.default !== undefined) return schema.default;
+
+        const type = Array.isArray(schema.type) ? schema.type[0] : schema.type;
+
+        if (type === 'string') return "";
+        if (type === 'number') return 0;
+        if (type === 'boolean') return false;
+        if (type === 'object') return {};
+        if (type === 'array') return [];
+        return null;
+    }
+
     // --- Schema Inference ---
 
     getSchemaForPath(path) {
@@ -429,8 +458,90 @@ class ColumnEditor {
                 this.render();
             };
 
+            // 3. Delete Button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>';
+            deleteBtn.title = 'Delete Item';
+
+            let deleteArmed = false;
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation(); // Prevent row click
+                if (deleteArmed) {
+                    this.deleteValueAt(fullPath);
+                } else {
+                    deleteArmed = true;
+                    deleteBtn.classList.add('confirm');
+                    // Reset after 3 seconds
+                    setTimeout(() => {
+                        deleteArmed = false;
+                        deleteBtn.classList.remove('confirm');
+                    }, 3000);
+                }
+            };
+            row.appendChild(deleteBtn);
+
             col.appendChild(row);
         });
+
+        // "Add Property" for Objects (Missing Optional Fields)
+        if (!Array.isArray(dataContext) && typeof dataContext === 'object') {
+            const schema = this.getSchemaForPath(path);
+            if (schema && schema.properties) {
+                const allKeys = Object.keys(schema.properties);
+                const currentKeys = Object.keys(dataContext);
+                const missingKeys = allKeys.filter(k => !currentKeys.includes(k));
+
+                if (missingKeys.length > 0) {
+                    const addPropBtn = document.createElement('button');
+                    addPropBtn.innerText = "+ Property";
+                    addPropBtn.className = "add-property-btn";
+
+                    addPropBtn.onclick = (e) => {
+                        e.stopPropagation();
+
+                        // Check if dropdown already exists
+                        const existingDropdown = col.querySelector('.property-dropdown');
+                        if (existingDropdown) {
+                            existingDropdown.remove();
+                            return;
+                        }
+
+                        // Create Dropdown
+                        const dropdown = document.createElement('div');
+                        dropdown.className = 'property-dropdown';
+                        dropdown.style.top = (addPropBtn.offsetTop + addPropBtn.offsetHeight) + 'px';
+                        dropdown.style.left = addPropBtn.offsetLeft + 'px';
+                        dropdown.style.width = addPropBtn.offsetWidth + 'px';
+
+                        missingKeys.forEach(key => {
+                            const item = document.createElement('div');
+                            item.className = 'property-dropdown-item';
+                            item.innerText = key;
+                            item.onclick = () => {
+                                const newPath = [...path, key];
+                                const propSchema = schema.properties[key];
+                                const defaultVal = this.getDefaultValue(propSchema);
+                                this.setValueAt(newPath, defaultVal);
+                            };
+                            dropdown.appendChild(item);
+                        });
+
+                        col.appendChild(dropdown);
+
+                        // Close on click outside
+                        const closeDropdown = (ev) => {
+                            if (!dropdown.contains(ev.target) && ev.target !== addPropBtn) {
+                                dropdown.remove();
+                                document.removeEventListener('click', closeDropdown);
+                            }
+                        };
+                        setTimeout(() => document.addEventListener('click', closeDropdown), 0);
+                    };
+                    col.appendChild(addPropBtn);
+                }
+            }
+        }
 
         // Add "Add Property" button for Objects or Arrays
         // (Simplified for this demo: supports Arrays)

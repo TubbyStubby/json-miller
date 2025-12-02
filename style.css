@@ -422,3 +422,125 @@ textarea:focus {
     border-bottom: 2px solid var(--accent);
     background: rgba(var(--accent), 0.05);
 }
+
+/* Optional Fields: "+ Property" Button */
+.add-property-btn {
+    background: transparent;
+    border: 1px dotted var(--text);
+    color: var(--text);
+    margin: 10px;
+    width: calc(100% - 20px);
+    opacity: 0.5;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+}
+
+.add-property-btn:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.05);
+    border-style: solid;
+}
+
+/* Property Dropdown (Popover) */
+.property-dropdown {
+    position: absolute;
+    background: var(--col-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    z-index: 100;
+    min-width: 150px;
+    overflow: hidden;
+    animation: fadeIn 0.1s ease-out;
+}
+
+.property-dropdown-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text);
+    transition: background 0.2s;
+}
+
+.property-dropdown-item:hover {
+    background: var(--hover);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Deletion: Hover-to-Reveal Trash Icon */
+.delete-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text);
+    opacity: 0;
+    /* Hidden by default */
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 4px;
+    transition: all 0.2s;
+    pointer-events: none;
+    /* Prevent interaction when hidden */
+}
+
+.row:hover .delete-btn {
+    opacity: 0.4;
+    pointer-events: auto;
+}
+
+.delete-btn:hover {
+    opacity: 1 !important;
+    color: #ef233c;
+    /* Red on hover */
+}
+
+.delete-btn.confirm {
+    opacity: 1 !important;
+    color: #ef233c;
+    animation: shake 0.3s;
+}
+
+@keyframes shake {
+    0% {
+        transform: translateY(-50%) translateX(0);
+    }
+
+    25% {
+        transform: translateY(-50%) translateX(-2px);
+    }
+
+    50% {
+        transform: translateY(-50%) translateX(2px);
+    }
+
+    75% {
+        transform: translateY(-50%) translateX(-2px);
+    }
+
+    100% {
+        transform: translateY(-50%) translateX(0);
+    }
+}
+
+/* Adjust row to make space for delete button */
+.row {
+    position: relative;
+    /* For absolute positioning of delete btn */
+    padding-right: 35px;
+    /* Make space */
+}
