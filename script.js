@@ -512,36 +512,25 @@ class ColumnEditor {
                         input.rows = 3; // Start with a reasonable height
                         // Auto-expand on input
                         input.oninput = (e) => {
-                            this.focusedPath = fullPath;
-                            this.focusedSelection = { start: e.target.selectionStart, end: e.target.selectionEnd };
-                            this.setValueAt(fullPath, e.target.value);
                             e.target.style.height = 'auto';
                             e.target.style.height = (e.target.scrollHeight) + 'px';
+                        };
+                        // Update on change (blur/enter) to preserve undo history
+                        input.onchange = (e) => {
+                            this.setValueAt(fullPath, e.target.value);
                         };
                     } else {
                         input = document.createElement('input');
                         input.type = valueType === 'number' ? 'number' : 'text';
                         input.value = value;
 
-                        input.oninput = (e) => {
-                            this.focusedPath = fullPath;
-                            if (input.type === 'text') {
-                                this.focusedSelection = { start: e.target.selectionStart, end: e.target.selectionEnd };
-                            }
+                        input.onchange = (e) => {
                             const val = valueType === 'number' ? parseFloat(e.target.value) : e.target.value;
                             this.setValueAt(fullPath, val);
                         };
                     }
 
-                    // Restore focus if this was the element being edited
-                    if (this.focusedPath && JSON.stringify(this.focusedPath) === JSON.stringify(fullPath)) {
-                        setTimeout(() => {
-                            input.focus();
-                            if (this.focusedSelection && input.type !== 'number') {
-                                input.setSelectionRange(this.focusedSelection.start, this.focusedSelection.end);
-                            }
-                        }, 0);
-                    }
+                    // Restore focus logic removed as we don't re-render on every keystroke anymore
 
                     if (input.type === 'text') {
                         if (validationErrors.has(JSON.stringify(fullPath))) {
