@@ -61,6 +61,41 @@ header {
     z-index: 10;
 }
 
+#breadcrumbs {
+    padding: 10px 25px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--text);
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.breadcrumb-item {
+    cursor: pointer;
+    color: var(--accent);
+    margin-right: 5px;
+}
+
+.breadcrumb-item:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+    color: var(--text);
+    cursor: default;
+    font-weight: 500;
+    pointer-events: none;
+}
+
+.breadcrumb-separator {
+    margin: 0 8px;
+    color: var(--text);
+    opacity: 0.5;
+}
+
 #editor-container {
     display: flex;
     flex: 1;

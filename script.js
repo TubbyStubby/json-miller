@@ -95,6 +95,9 @@ class ColumnEditor {
         // Update Output JSON
         this.output.innerText = JSON.stringify(this.data, null, 2);
 
+        // Render Breadcrumbs
+        this.renderBreadcrumbs();
+
         // Always render root level
         this.renderColumn([], this.data);
 
@@ -114,13 +117,72 @@ class ColumnEditor {
         }
     }
 
+    renderBreadcrumbs() {
+        const breadcrumbsContainer = document.getElementById('breadcrumbs');
+        breadcrumbsContainer.innerHTML = '';
+
+        const fullPath = ['ROOT', ...this.selectionPath];
+
+        fullPath.forEach((item, index) => {
+            // Separator
+            if (index > 0) {
+                const sep = document.createElement('span');
+                sep.className = 'breadcrumb-separator';
+                sep.innerText = '>';
+                breadcrumbsContainer.appendChild(sep);
+            }
+
+            const el = document.createElement('span');
+            el.className = 'breadcrumb-item';
+            el.innerText = item;
+
+            if (index === fullPath.length - 1) {
+                el.classList.add('active');
+            } else {
+                el.onclick = () => {
+                    // Navigate to this path
+                    // If index is 0 (ROOT), path is []
+                    // If index is 1, path is [selectionPath[0]]
+                    this.selectionPath = this.selectionPath.slice(0, index);
+                    this.render();
+                };
+            }
+            breadcrumbsContainer.appendChild(el);
+        });
+    }
+
     renderColumn(path, dataContext) {
         const col = document.createElement('div');
         col.className = 'column';
 
         const header = document.createElement('div');
         header.className = 'column-header';
-        header.innerText = path.length === 0 ? 'ROOT' : path[path.length - 1];
+
+        // Dynamic Header Logic
+        let headerText = 'ROOT';
+        if (path.length > 0) {
+            const lastKey = path[path.length - 1];
+            const schema = this.getSchemaForPath(path);
+
+            if (schema && schema.title) {
+                headerText = schema.title;
+                // If it's an array item, append index for clarity
+                if (!isNaN(lastKey)) {
+                    headerText += ` [${lastKey}]`;
+                }
+            } else {
+                // Fallback: use key name
+                headerText = String(lastKey).toUpperCase();
+                // If it's just a number, try to give context from parent
+                if (!isNaN(lastKey)) {
+                    const parentPath = path.slice(0, -1);
+                    const parentLastKey = parentPath.length > 0 ? parentPath[parentPath.length - 1] : 'ITEM';
+                    headerText = `${String(parentLastKey).toUpperCase()} [${lastKey}]`;
+                }
+            }
+        }
+
+        header.innerText = headerText;
         col.appendChild(header);
 
         const keys = Object.keys(dataContext);
