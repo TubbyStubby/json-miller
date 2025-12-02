@@ -58,3 +58,15 @@ This document outlines the key features implemented in the JSON Miller Editor.
 
 ### 5. Theming
 -   **Dark/Light Mode**: Toggle between dark and light themes. The application respects the system preference by default.
+
+### 6. Validation & Integrity
+-   **Schema Validation**: Integrated `AJV` for robust JSON Schema validation, including support for `pattern` (regex), `format` (e.g., date-time), and required fields.
+-   **Real-time Feedback**: Validation errors (e.g., invalid format, missing required fields) are displayed immediately as you type.
+-   **Error Bubbling**: Errors deep in the hierarchy bubble up, visually flagging parent rows so you can easily locate issues in collapsed or nested structures.
+-   **Required Fields**:
+    -   **Visual Indicators**: Required fields have bold labels.
+    -   **Locking**: Required fields show a lock icon and cannot be deleted.
+    -   **Auto-Population**: Adding a new object automatically populates it with required fields defined in the schema.
+
+### 7. Usability Enhancements
+-   **Undo/Redo Support**: Full support for `Ctrl+Z` (Undo) in input fields. The editor intelligently manages updates to preserve the browser's native undo history.
