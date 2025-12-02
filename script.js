@@ -73,9 +73,54 @@ class ColumnEditor {
         if (type === 'string') return "";
         if (type === 'number') return 0;
         if (type === 'boolean') return false;
-        if (type === 'object') return {};
+        if (type === 'object') {
+            const obj = {};
+            if (schema.required) {
+                schema.required.forEach(reqKey => {
+                    if (schema.properties && schema.properties[reqKey]) {
+                        obj[reqKey] = this.getDefaultValue(schema.properties[reqKey]);
+                    }
+                });
+            }
+            return obj;
+        }
         if (type === 'array') return [];
         return null;
+    }
+
+    isRequired(parentSchema, key) {
+        if (!parentSchema || !parentSchema.required) return false;
+        return parentSchema.required.includes(key);
+    }
+
+    validate(data, schema, path = []) {
+        const errors = new Set();
+        if (!schema) return errors;
+
+        // Check required fields for objects
+        if (schema.type === 'object' && schema.required) {
+            schema.required.forEach(reqKey => {
+                if (data === undefined || data[reqKey] === undefined) {
+                    errors.add(JSON.stringify([...path, reqKey]));
+                }
+            });
+        }
+
+        // Recursively validate children
+        if (typeof data === 'object' && data !== null) {
+            Object.keys(data).forEach(key => {
+                const value = data[key];
+                const currentPath = [...path, Array.isArray(data) ? Number(key) : key];
+                const childSchema = this.getSchemaForPath(currentPath);
+
+                if (childSchema) {
+                    const childErrors = this.validate(value, childSchema, currentPath);
+                    childErrors.forEach(e => errors.add(e));
+                }
+            });
+        }
+
+        return errors;
     }
 
     // --- Schema Inference ---
@@ -127,18 +172,22 @@ class ColumnEditor {
         // Render Breadcrumbs
         this.renderBreadcrumbs();
 
+        // Run validation once to get all errors
+        const validationErrors = this.validate(this.data, this.rootSchema);
+
         // Always render root level
-        this.renderColumn([], this.data);
+        this.renderColumn([], this.data, validationErrors);
 
         // Render subsequent columns based on selectionPath
         let currentPath = [];
+
         for (const key of this.selectionPath) {
             currentPath.push(key);
             const value = this.getValueAt(currentPath);
 
             // Only render next column if value is complex (obj/arr) and exists
             if (value && typeof value === 'object') {
-                this.renderColumn([...currentPath], value);
+                this.renderColumn([...currentPath], value, validationErrors);
             } else {
                 // Path is invalid or leads to primitive, stop rendering deeper
                 break;
@@ -217,7 +266,7 @@ class ColumnEditor {
         });
     }
 
-    renderColumn(path, dataContext) {
+    renderColumn(path, dataContext, validationErrors = new Set()) {
         const col = document.createElement('div');
         col.className = 'column';
 
@@ -262,10 +311,32 @@ class ColumnEditor {
 
             // Determine schema for this specific field
             const fieldSchema = this.getSchemaForPath(fullPath);
+            const parentSchema = this.getSchemaForPath(path);
+            const isRequired = !Array.isArray(dataContext) && this.isRequired(parentSchema, key);
 
             const row = document.createElement('div');
             row.className = 'row';
             row.setAttribute('data-path', JSON.stringify(fullPath));
+
+            // Validation Styling
+            const pathStr = JSON.stringify(fullPath);
+            if (validationErrors.has(pathStr)) {
+                row.classList.add('has-error');
+            } else {
+                // Check if any child has error (Bubbling)
+                // Simple check: does any error path start with this path?
+                for (let errPath of validationErrors) {
+                    if (errPath.startsWith(pathStr.slice(0, -1)) && errPath.length > pathStr.length) { // slice to remove ']'
+                        // Actually, string check is tricky. Let's parse or just check prefix string
+                        // JSON.stringify([1,2]) is "[1,2]". JSON.stringify([1,2,3]) is "[1,2,3]".
+                        // "[1,2,3]".startsWith("[1,2") is true.
+                        if (errPath.startsWith(pathStr.slice(0, -1) + ',')) {
+                            row.classList.add('child-error');
+                            break;
+                        }
+                    }
+                }
+            }
 
             // Sync Highlight: Hover on Row -> Highlight JSON Line
             row.onmouseenter = () => {
@@ -296,6 +367,8 @@ class ColumnEditor {
 
             const label = document.createElement('span');
             label.className = 'key-label';
+            if (isRequired) label.classList.add('required');
+            else label.classList.add('optional');
             label.innerText = key;
 
             // Type Switcher Logic
@@ -425,6 +498,11 @@ class ColumnEditor {
                         }, 0);
                     }
 
+                    if (input.type === 'text') {
+                        if (validationErrors.has(JSON.stringify(fullPath))) {
+                            input.classList.add('input-error');
+                        }
+                    }
                     inputWrapper.appendChild(input);
                 }
                 row.appendChild(inputWrapper);
@@ -458,28 +536,35 @@ class ColumnEditor {
                 this.render();
             };
 
-            // 3. Delete Button
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>';
-            deleteBtn.title = 'Delete Item';
+            // 3. Delete Button or Lock Icon
+            if (isRequired) {
+                const lockIcon = document.createElement('span');
+                lockIcon.className = 'lock-icon';
+                lockIcon.innerHTML = '🔒'; // Or SVG
+                row.appendChild(lockIcon);
+            } else {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>';
+                deleteBtn.title = 'Delete Item';
 
-            let deleteArmed = false;
-            deleteBtn.onclick = (e) => {
-                e.stopPropagation(); // Prevent row click
-                if (deleteArmed) {
-                    this.deleteValueAt(fullPath);
-                } else {
-                    deleteArmed = true;
-                    deleteBtn.classList.add('confirm');
-                    // Reset after 3 seconds
-                    setTimeout(() => {
-                        deleteArmed = false;
-                        deleteBtn.classList.remove('confirm');
-                    }, 3000);
-                }
-            };
-            row.appendChild(deleteBtn);
+                let deleteArmed = false;
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation(); // Prevent row click
+                    if (deleteArmed) {
+                        this.deleteValueAt(fullPath);
+                    } else {
+                        deleteArmed = true;
+                        deleteBtn.classList.add('confirm');
+                        // Reset after 3 seconds
+                        setTimeout(() => {
+                            deleteArmed = false;
+                            deleteBtn.classList.remove('confirm');
+                        }, 3000);
+                    }
+                };
+                row.appendChild(deleteBtn);
+            }
 
             col.appendChild(row);
         });
