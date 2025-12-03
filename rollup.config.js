@@ -1,7 +1,7 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
-import css from 'rollup-plugin-css-only';
+import { string } from 'rollup-plugin-string';
 import replace from '@rollup/plugin-replace';
 
 export default {
@@ -21,6 +21,8 @@ export default {
         }),
         commonjs(),
         json(),
-        css({ output: 'json-miller.css' })
+        string({
+            include: '**/*.css'
+        })
     ]
 };

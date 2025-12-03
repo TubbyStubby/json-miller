@@ -1,4 +1,11 @@
-:root {
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,slnt,wdth,wght,GRAD,ROND@6..144,-10..0,25..151,1..1000,0..100,0..100&display=swap');
+
+:host {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+
     /* Base variables - Dark Mode (Default) */
     --bg: #202124;
     --col-bg: #2d2e31;
@@ -16,7 +23,7 @@
     --active-bg: rgba(66, 135, 245, 0.1);
 }
 
-[data-theme="light"] {
+:host([data-theme="light"]) {
     --bg: #f0f2f5;
     --col-bg: #ffffff;
     --border: #dadce0;
@@ -30,17 +37,21 @@
     --output-bg: #ffffff;
 }
 
-/* Demo Page Styles (Global) */
-body {
-    margin: 0;
+* {
+    box-sizing: border-box;
+}
+
+
+
+.json-miller-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
     font-family: "Google Sans Flex", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-variation-settings: "GRAD" 0, "slnt" 0, "wdth" 100, "wght" 400;
     background: var(--bg);
     color: var(--text);
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
     transition: background 0.3s, color 0.3s;
 }
 
@@ -78,16 +89,7 @@ body {
 
 /* --- JsonMiller Library Styles --- */
 
-.json-miller-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-    font-family: "Google Sans Flex", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    /* Ensure font is inherited or set */
-    color: var(--text);
-    /* Ensure text color is applied */
-}
+
 
 .json-miller-container .jm-breadcrumbs {
     padding: 10px 25px;
@@ -272,6 +274,20 @@ body {
 }
 
 /* Side-by-side layout for scalar fields */
+.json-miller-container[data-theme="light"] {
+    --bg: #f0f2f5;
+    --col-bg: #ffffff;
+    --border: #dadce0;
+    --text: #202124;
+    --accent: #1a73e8;
+    --accent-active: #fce8e6;
+    --hover: #f1f3f48e;
+    --active-row: #e8f0fe;
+    --input-bg: rgba(0, 0, 0, 0.05);
+    --header-bg: #ffffff;
+    --output-bg: #ffffff;
+}
+
 .json-miller-container .row.scalar-row {
     flex-direction: row;
     align-items: center;
@@ -292,21 +308,6 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     display: block;
-}
-
-.json-miller-container .row.scalar-row .key-label:hover {
-    position: absolute;
-    left: 40px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: var(--col-bg);
-    z-index: 100;
-    padding: 4px 8px;
-    border-radius: 4px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-    width: max-content;
-    max-width: 300px;
 }
 
 .json-miller-container .row.scalar-row .input-wrapper {
