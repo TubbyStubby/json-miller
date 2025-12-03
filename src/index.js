@@ -434,19 +434,29 @@ export class JsonMiller {
         if (path.length > 0) {
             const lastKey = path[path.length - 1];
             const schema = this.getSchemaForPath(path);
+            const isArrayItem = !isNaN(lastKey);
+
+            let title = '';
 
             if (schema && schema.title) {
-                headerText = schema.title;
-                if (!isNaN(lastKey)) {
-                    headerText += ` [${lastKey}]`;
-                }
+                title = schema.title;
             } else {
-                headerText = String(lastKey).toUpperCase();
-                if (!isNaN(lastKey)) {
+                if (isArrayItem) {
                     const parentPath = path.slice(0, -1);
-                    const parentLastKey = parentPath.length > 0 ? parentPath[parentPath.length - 1] : 'ITEM';
-                    headerText = `${String(parentLastKey).toUpperCase()} [${lastKey}]`;
+                    const parentLastKey = parentPath.length > 0 ? parentPath[parentPath.length - 1] : 'Item';
+                    title = String(parentLastKey);
+                } else {
+                    title = String(lastKey);
                 }
+                // Capitalize first letter
+                title = title.charAt(0).toUpperCase() + title.slice(1);
+            }
+
+            title = title.replaceAll(/[-_]/g, ' ');
+            if (isArrayItem) {
+                headerText = `${title} #${lastKey}`;
+            } else {
+                headerText = title;
             }
         }
 
