@@ -20,8 +20,14 @@ export class JsonMiller {
         this.selectionPath = []; // Array of keys/indices
         this.focusedPath = null;
 
+        // Theme state
+        this.isDark = true;
+
         // Create internal DOM structure
         this._createDom();
+
+        // Init Theme
+        this._initTheme();
 
         // Init AJV
         this._loadAjv();
@@ -31,7 +37,29 @@ export class JsonMiller {
 
     _createDom() {
         this.container.classList.add('json-miller-container');
-        this.container.innerHTML = `
+
+        // Create Header
+        this.header = document.createElement('header');
+        this.header.innerHTML = `
+            <h3>Miller Column JSON Editor</h3>
+            <div style="display: flex; gap: 10px;">
+                <button class="jm-theme-btn">🌙 Dark Mode</button>
+                <button class="jm-lock-btn">🔓 Unlock</button>
+                <button class="jm-copy-btn">Copy JSON</button>
+            </div>
+        `;
+
+        // Create Body
+        const body = document.createElement('div');
+        body.className = 'jm-body';
+        // Ensure body takes remaining space
+        body.style.display = 'flex';
+        body.style.flexDirection = 'column';
+        body.style.flex = '1';
+        body.style.minHeight = '0';
+        body.style.overflow = 'hidden';
+
+        body.innerHTML = `
             <div class="jm-breadcrumbs"></div>
             <div class="jm-workspace">
                 <div class="jm-editor"></div>
@@ -39,12 +67,21 @@ export class JsonMiller {
             </div>
         `;
 
+        this.container.appendChild(this.header);
+        this.container.appendChild(body);
+
         this.breadcrumbsContainer = this.container.querySelector('.jm-breadcrumbs');
         this.editorContainer = this.container.querySelector('.jm-editor');
         this.outputContainer = this.container.querySelector('.jm-output');
 
-        // Hide output by default or based on config? Let's keep it visible for now but maybe add a toggle later.
-        // For now, we just replicate the structure.
+        this.themeBtn = this.header.querySelector('.jm-theme-btn');
+        this.lockBtn = this.header.querySelector('.jm-lock-btn');
+        this.copyBtn = this.header.querySelector('.jm-copy-btn');
+
+        // Bind events
+        this.themeBtn.onclick = () => this.toggleTheme();
+        this.lockBtn.onclick = () => this.toggleLock();
+        this.copyBtn.onclick = () => this.copyJson();
     }
 
     _loadAjv() {
@@ -93,13 +130,23 @@ export class JsonMiller {
     lock() {
         this.isLocked = true;
         this.container.classList.add('jm-locked');
+        if (this.lockBtn) this.lockBtn.innerText = '🔒 Lock';
         this.render({ preserveScroll: true });
     }
 
     unlock() {
         this.isLocked = false;
         this.container.classList.remove('jm-locked');
+        if (this.lockBtn) this.lockBtn.innerText = '🔓 Unlock';
         this.render({ preserveScroll: true });
+    }
+
+    toggleLock() {
+        if (this.isLocked) {
+            this.unlock();
+        } else {
+            this.lock();
+        }
     }
 
     getValue() {
@@ -113,6 +160,36 @@ export class JsonMiller {
     destroy() {
         this.container.innerHTML = '';
         this.container.classList.remove('json-miller-container', 'jm-locked');
+    }
+
+    // --- Header Actions ---
+
+    _initTheme() {
+        // Check system preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.isDark = false;
+        }
+        this._updateTheme();
+    }
+
+    toggleTheme() {
+        this.isDark = !this.isDark;
+        this._updateTheme();
+    }
+
+    _updateTheme() {
+        if (this.isDark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            if (this.themeBtn) this.themeBtn.innerText = '🌙 Dark Mode';
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            if (this.themeBtn) this.themeBtn.innerText = '☀️ Light Mode';
+        }
+    }
+
+    copyJson() {
+        navigator.clipboard.writeText(JSON.stringify(this.data, null, 2));
+        alert("JSON copied to clipboard");
     }
 
     // --- Data Helpers ---

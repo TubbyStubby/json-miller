@@ -13,21 +13,13 @@
 
 <body>
 
-    <header>
-        <h3>Miller Column JSON Editor</h3>
-        <div style="display: flex; gap: 10px;">
-            <button onclick="toggleTheme()" id="theme-btn">🌙 Dark Mode</button>
-            <button onclick="toggleLock()" id="lock-btn">🔓 Unlock</button>
-            <button onclick="copyJson()">Copy JSON</button>
-        </div>
-    </header>
-
     <!-- Container for the editor -->
-    <div id="editor-wrapper" style="display: flex; flex: 1; min-height: 0; overflow: hidden;"></div>
+    <div id="editor-wrapper" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
+    </div>
 
     <!-- Bundled Library -->
     <script type="module">
-        import { JsonMiller } from './dist/json-miller.bundle.js?v=2';
+        import { JsonMiller } from './dist/json-miller.bundle.js?v=3';
         window.JsonMiller = JsonMiller;
         console.log('Module loaded', JsonMiller);
     </script>
@@ -48,54 +40,6 @@
         const schema = { "type": "object", "properties": { "id": { "type": "number" }, "match_config": { "title": "match_config", "type": "object", "properties": { "player_level_cap": { "type": "number", "default": 25 }, "investment": { "type": "array", "items": { "title": "itemOf_investment", "type": "object", "properties": { "id": { "type": "number" }, "type": { "type": "string" }, "quantity": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "rewards": { "title": "rewards", "type": "object", "properties": { "win": { "type": "array", "items": { "title": "itemOf_win", "type": "object", "properties": { "id": { "type": "number" }, "type": { "type": "string" }, "quantity": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "loss": { "type": "array", "items": { "title": "itemOf_loss", "type": "object", "properties": { "id": { "type": "number" }, "type": { "type": "string" }, "quantity": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "tie": { "type": "array", "items": { "title": "itemOf_tie", "type": "object", "properties": { "id": { "type": "number" }, "type": { "type": "string" }, "quantity": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } } } }, "matchmaking": { "title": "matchmaking", "type": "object", "properties": { "opponent_buffer": { "type": "number", "default": 2 } } }, "cards_per_match": { "type": "number", "default": 2 } } }, "starts_at": { "type": "string", "format": "date-time" }, "ends_at": { "type": "string", "format": "date-time" }, "sessions": { "type": "array", "items": { "title": "itemOf_sessions", "type": "object", "properties": { "id": { "type": "number" }, "start_time": { "type": "string" }, "end_time": { "type": "string" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "general_info": { "title": "general_info", "type": "object", "properties": { "guidelines_data": { "type": "array", "items": { "title": "itemOf_guidelines_data", "type": "object", "properties": { "title": { "type": "string", "default": "Title" }, "body": { "type": "string", "default": "Description" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "infographics_data": { "type": "array", "items": { "title": "itemOf_infographics_data", "type": "object", "properties": { "url": { "type": "string", "default": "" }, "identifier": { "type": "string", "default": "" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "leaderboard": { "title": "leaderboard", "type": "object", "properties": { "lb_discord_link": { "type": "string", "default": "" }, "rewards": { "title": "rewards", "type": "object", "properties": { "url": { "type": "string", "default": "" }, "identifier": { "type": "string", "default": "" } } } } }, "event_items_info_text": { "type": "string", "default": "" } } }, "event_skus": { "type": "array", "items": { "title": "itemOf_event_skus", "type": "object", "properties": { "id": { "type": "number" }, "name": { "type": "string" }, "rewards": { "type": "array", "items": { "title": "itemOf_rewards", "type": "object", "properties": { "id": { "type": "number" }, "type": { "type": "string" }, "quantity": { "type": "number" }, "rarity": { "type": "string" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "price": { "type": "array", "items": { "title": "itemOf_price", "type": "object", "properties": { "id": { "type": "number" }, "type": { "type": "string" }, "quantity": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "url": { "type": "string" }, "identifier": { "type": "string" }, "infographic": { "type": "string" }, "max_allowable_buys": { "type": "number" }, "daily_max_allowable_buys": { "type": "number" }, "characters": { "type": "array", "items": { "type": "number" } }, "order": { "type": "number" }, "status": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "status": { "type": "number" }, "release_version": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" }, "__v": { "type": "number" } }, "required": ["id", "starts_at", "ends_at", "release_version"] };
 
         const initialData = { "id": 1, "match_config": { "player_level_cap": 25, "investment": [{ "id": 1, "type": "HardCurrency", "quantity": 0 }], "rewards": { "win": [{ "id": 9, "type": "SoftCurrency", "quantity": 7 }, { "id": 1, "type": "HardCurrency", "quantity": 0 }], "loss": [], "tie": [] }, "matchmaking": { "opponent_buffer": 2 }, "cards_per_match": 2 }, "general_info": { "guidelines_data": [{ "title": "New event: PvP World Cup", "body": "The wait is finally over, we present to you PvP World Cup!! \nPvP World Cup is a brand new limited-time exclusive Multiplayer event. The event would be live only for a duration of 7 days.  \nWe now ensure a level playing field for all our managers and their team. All teams participating in the event would be levels out to level 25, that is the level of players in the team would be buffed or nerfed such that each player in the team is level 25, with the exception fo common players, who are maxxed to level 10. \nNow get ready to use every trick in your book to battle against others in real time!\n\nPS: The buff or nerf on levels will only apply for the PvP World Cup matches.\n" }, { "title": "New power-ups!", "body": "Introducing brand new special power-up cards that you can use in-match to gain advantage over your opponent. These cards give you the extra edge you need and sometimes can even turn the game around. \nBut  it’s a double-edged sword. Using the cards and losing a match means that your cards are won by the opponent and vice versa.  \n\nInstant Special Ability card: Used to fill up your Special Ability mana instantly. \nRecall card: Users can bring back 1 batsman who was previously out, back onto the pitch.\nYou can have upto 2 cards at once with you in the match.\nPS: You shall only win your opponent's card if they use it, lose and you have less than 2 cards.  \n" }, { "title": "How to register for the event?  ", "body": "No registration is required. Any user above Level 6 is eligible for participation! \nThe event registration is completely free of cost!\n\nEvent Timings\nThe event is divided into two sessions in a day-\n\n1st Session: 2pm to 5pm IST\n2nd Session: 8pm to 11pm IST\n\nAll managers who are eligible will be able to play the event" }, { "title": "Playing a PvP World Cup match", "body": "Each PvP World Cup match costs only 5 Hitcoins. Winning a match would reward the team with 10 gems and 7 Hitcoins\n\nHow to play?\n\nManagers will have to make their own lineup in the squad page and then face off against other users in real-time. This effect is only for PvP World Cup matches, the actual players level will not be changed. \nThe match would follow the same PvP format, which includes both batting and bowling, with the use of the Class Advantage system, which will affect your PvP gameplay." }, { "title": "PvP gameplay: Class Advantage", "body": "Users will be matched against other users of similar strength. Both players will be allowed to select their starting batsmen/bowlers before the match starts.\n\nClass Advantage\nThe class advantage system for this mode makes it interesting. Users will have 1 of 3 types of players- Powerful (red), balanced (green), technical (blue). \n\nRed beats Green\nGreen beats Blue\nBlue beats red\n\nDepending on the type, the batsmen might get hindered and there will be no mana filling during a type disadvantage." }], "infographics_data": [{ "url": "https://cdn.octathorpeweb.com/v1/superstars-ipl/pvp_wc_slide1_1.png", "identifier": "br_infographics_slide1_1" }, { "url": "https://cdn.octathorpeweb.com/v1/superstars-ipl/pvp_wc_slide2.png", "identifier": "br_infographics_slide2_1" }, { "url": "https://cdn.octathorpeweb.com/v1/superstars-ipl/pvp_wc_slide3.png", "identifier": "br_infographics_slide3_1" }], "leaderboard": { "lb_discord_link": "", "rewards": { "url": "https://cdn.octathorpeweb.com/v1/superstars-ipl/pvp_wc_leaderboard.png", "identifier": "br_leaderboard_rewards_infographics_1" } }, "event_items_info_text": "All items have a purchase limit for the event. \n\nSuper Chest: 18\nTraining Points: 9\nWorld Class Player: 2" }, "event_skus": [{ "id": 1, "name": "Brilliant Player Box", "price": [{ "id": 9, "type": "SoftCurrency", "quantity": 420 }], "url": "https://cdn.octathorpeweb.com/v1/superstars-ipl/Battle+Royale/UI+cards/Brill+Card+v2.png", "identifier": "br_brilliant_player_box", "infographic": "You will get any one of the three premium Brilliant players shown in the Box with each purchase!\nBox has a limit of three purchases.", "max_allowable_buys": 3, "characters": [168, 197, 158], "order": 1, "status": 0 }, { "id": 2, "name": "World Class Player", "price": [{ "id": 9, "type": "SoftCurrency", "quantity": 1400 }], "url": "https://cdn.octathorpeweb.com/v1/superstars-ipl/pvp_wc_wc2.png", "identifier": "br_wc_player_box_1", "infographic": "You will get any one of three premium WC players shown in the Box with each purchase!\nBox has a limit of two purchases.", "max_allowable_buys": 2, "characters": [155, 196, 156], "order": 3, "status": 1 }, { "id": 3, "name": "Super Chest", "price": [{ "id": 9, "type": "SoftCurrency", "quantity": 25 }], "url": "https://cdn.octathorpeweb.com/v1/superstars-ipl/pvp_wc_cstore.png", "identifier": "br_super_chest_1", "infographic": "Open the super chest with the gems.\nCan purchase 18 super chest throughtout the event.", "max_allowable_buys": 18, "order": 1, "status": 1 }, { "id": 4, "name": "Training Points", "rewards": [{ "id": 5, "type": "SoftCurrency", "quantity": 50000, "rarity": "Epic" }], "price": [{ "id": 9, "type": "SoftCurrency", "quantity": 120 }], "url": "https://cdn.octathorpeweb.com/v1/superstars-ipl/pvp_wc_tpstore.png", "identifier": "br_training_points", "infographic": "Exchange your gems to earn Training Points!", "max_allowable_buys": 9, "order": 2, "status": 1 }], "starts_at": "2022-10-24T00:00:00.000", "ends_at": "2022-11-02T00:00:00.000Z", "sessions": [{ "id": 1, "start_time": "14:00:00", "end_time": "17:00:00" }, { "id": 2, "start_time": "20:00:00", "end_time": "23:00:00" }], "status": 1, "release_version": 999 };
-
-        // Initialize Editor
-        window.editor = new JsonMiller('#editor-wrapper', {
-            data: initialData,
-            schema: schema
-        });
-
-        // Expose functions for buttons
-        window.copyJson = () => {
-            navigator.clipboard.writeText(JSON.stringify(window.editor.getValue(), null, 2));
-            alert("JSON copied to clipboard");
-        };
-
-        window.toggleLock = () => {
-            const btn = document.getElementById('lock-btn');
-            if (window.editor.isLocked) {
-                window.editor.unlock();
-                btn.innerText = '🔓 Unlock';
-            } else {
-                window.editor.lock();
-                btn.innerText = '🔒 Lock';
-            }
-        };
-
-        // Theme Toggle Logic
-        const themeBtn = document.getElementById('theme-btn');
-        let isDark = true;
-
-        // Check system preference
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-            isDark = false;
-        }
-        updateTheme();
-
-        window.toggleTheme = () => {
-            isDark = !isDark;
-            updateTheme();
-        }
-
-        function updateTheme() {
-            if (isDark) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                themeBtn.innerText = '🌙 Dark Mode';
-            } else {
-                document.documentElement.setAttribute('data-theme', 'light');
-                themeBtn.innerText = '☀️ Light Mode';
-            }
-        }
     </script>
 </body>
 
