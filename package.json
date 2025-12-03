@@ -1,7 +1,7 @@
 {
   "name": "json-miller",
   "version": "1.0.0",
-  "main": "script.js",
+  "main": "dist/json-miller.bundle.js",
   "type": "module",
   "directories": {
     "doc": "docs"

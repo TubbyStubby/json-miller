@@ -5,7 +5,7 @@ import css from 'rollup-plugin-css-only';
 import replace from '@rollup/plugin-replace';
 
 export default {
-    input: 'script.js',
+    input: 'src/index.js',
     output: {
         file: 'dist/json-miller.bundle.js',
         format: 'esm',
