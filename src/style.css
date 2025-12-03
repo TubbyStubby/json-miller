@@ -56,7 +56,7 @@
 }
 
 .json-miller-container header {
-    padding: 15px 25px;
+    padding: 5px 20px;
     border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
@@ -92,7 +92,7 @@
 
 
 .json-miller-container .jm-breadcrumbs {
-    padding: 10px 25px;
+    padding: 5px 20px;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
     display: flex;
@@ -598,7 +598,7 @@
 
 /* Required Fields */
 .json-miller-container .key-label.required {
-    font-weight: 700;
+    font-weight: 400;
 }
 
 .json-miller-container .key-label.optional {
