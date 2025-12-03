@@ -1,0 +1,654 @@
+:root {
+    /* Base variables - Dark Mode (Default) */
+    --bg: #202124;
+    --col-bg: #2d2e31;
+    --border: #3c4043;
+    --text: #e8eaed;
+    --accent: #8ab4f8;
+    --accent-active: #f28b82;
+    --hover: #303134;
+    --active-row: #3c4043;
+    --input-bg: rgba(255, 255, 255, 0.05);
+    --header-bg: #202124;
+    --output-bg: #202124;
+    --border-radius: 16px;
+    --shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    --active-bg: rgba(66, 135, 245, 0.1);
+}
+
+[data-theme="light"] {
+    --bg: #f0f2f5;
+    --col-bg: #ffffff;
+    --border: #dadce0;
+    --text: #202124;
+    --accent: #1a73e8;
+    --accent-active: #fce8e6;
+    --hover: #f1f3f48e;
+    --active-row: #e8f0fe;
+    --input-bg: rgba(0, 0, 0, 0.05);
+    --header-bg: #ffffff;
+    --output-bg: #ffffff;
+}
+
+/* Demo Page Styles (Global) */
+body {
+    margin: 0;
+    font-family: "Google Sans Flex", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-variation-settings: "GRAD" 0, "slnt" 0, "wdth" 100, "wght" 400;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: background 0.3s, color 0.3s;
+}
+
+.json-miller-container header {
+    padding: 15px 25px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--header-bg);
+    box-shadow: var(--shadow);
+    z-index: 10;
+}
+
+.json-miller-container header button {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.json-miller-container header button:hover {
+    background: var(--hover);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* --- JsonMiller Library Styles --- */
+
+.json-miller-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    font-family: "Google Sans Flex", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    /* Ensure font is inherited or set */
+    color: var(--text);
+    /* Ensure text color is applied */
+}
+
+.json-miller-container .jm-breadcrumbs {
+    padding: 10px 25px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--text);
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.json-miller-container .breadcrumb-item {
+    cursor: pointer;
+    color: var(--accent);
+    margin-right: 5px;
+}
+
+.json-miller-container .breadcrumb-item:hover {
+    text-decoration: underline;
+}
+
+.json-miller-container .breadcrumb-item.active {
+    color: var(--text);
+    cursor: default;
+    font-weight: 500;
+    pointer-events: none;
+}
+
+.json-miller-container .breadcrumb-separator {
+    margin: 0 8px;
+    color: var(--text);
+    opacity: 0.5;
+}
+
+.json-miller-container .breadcrumb-copy-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 4px;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.json-miller-container .breadcrumb-copy-btn:hover {
+    opacity: 1;
+    background: rgba(var(--accent), 0.1);
+    color: var(--accent);
+}
+
+.json-miller-container .jm-workspace {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.json-miller-container .jm-editor {
+    display: flex;
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    padding: 20px;
+    gap: 15px;
+    justify-content: center;
+}
+
+/* Columns */
+.json-miller-container .column {
+    width: 320px;
+    min-width: 320px;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    background: var(--col-bg);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow);
+}
+
+.json-miller-container .column-header {
+    padding: 15px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    opacity: 0.7;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+/* Rows */
+.json-miller-container .row {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    padding-right: 35px;
+}
+
+.json-miller-container .row:last-child {
+    border-bottom: none;
+}
+
+.json-miller-container .row:hover {
+    background: var(--hover);
+}
+
+.json-miller-container .row.active {
+    background: var(--active-bg);
+    border-left: none;
+    box-shadow: none;
+    font-weight: 500;
+}
+
+.json-miller-container .row-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+.json-miller-container .key-label {
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+/* Data Type Colors */
+.json-miller-container .type-string {
+    color: #5db075;
+}
+
+.json-miller-container .type-number {
+    color: #f2a53d;
+}
+
+.json-miller-container .type-boolean {
+    color: #a4508b;
+}
+
+.json-miller-container .type-object {
+    color: #4285f4;
+}
+
+.json-miller-container .type-array {
+    color: #fbbc04;
+}
+
+.json-miller-container .type-null {
+    color: #9aa0a6;
+}
+
+.json-miller-container .type-badge {
+    font-size: 0.85rem;
+    padding: 4px 6px;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid transparent;
+    font-family: 'Fira Code', monospace;
+    font-weight: bold;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    text-align: center;
+    min-width: 24px;
+}
+
+.json-miller-container .type-badge:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Side-by-side layout for scalar fields */
+.json-miller-container .row.scalar-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.json-miller-container .row.scalar-row .row-header {
+    margin-bottom: 0;
+    flex: 0 0 40%;
+    max-width: 140px;
+    overflow: visible;
+    position: relative;
+}
+
+.json-miller-container .row.scalar-row .key-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.json-miller-container .row.scalar-row .key-label:hover {
+    position: absolute;
+    left: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--col-bg);
+    z-index: 100;
+    padding: 4px 8px;
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    width: max-content;
+    max-width: 300px;
+}
+
+.json-miller-container .row.scalar-row .input-wrapper {
+    flex: 1;
+    width: auto;
+}
+
+/* Inputs */
+.json-miller-container .input-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.json-miller-container input,
+.json-miller-container select {
+    background: var(--input-bg);
+    border: none;
+    border-bottom: 1px solid transparent;
+    color: var(--text);
+    padding: 8px;
+    border-radius: 4px;
+    width: 100%;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.json-miller-container input:focus,
+.json-miller-container select:focus {
+    outline: none;
+    background: rgba(var(--accent), 0.1);
+    border-bottom: 1px solid var(--accent);
+}
+
+/* Highlight label on focus */
+.json-miller-container .row:focus-within .key-label {
+    color: var(--accent);
+}
+
+/* Output Pane */
+.json-miller-container .jm-output {
+    width: 400px;
+    border-left: 1px solid var(--border);
+    padding: 25px;
+    background: var(--output-bg);
+    overflow-y: auto;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    color: var(--text);
+    box-shadow: -4px 0 10px rgba(0, 0, 0, 0.05);
+    transition: width 0.3s ease, padding 0.3s ease;
+}
+
+.json-miller-container .jm-output.collapsed {
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+    border-left: none;
+}
+
+.json-miller-container .json-line {
+    display: block;
+    font-family: 'Fira Code', monospace;
+    white-space: pre;
+    padding: 0 4px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.json-miller-container .json-line:hover {
+    background: rgba(var(--accent), 0.1);
+}
+
+.json-miller-container .json-line.highlight {
+    background: rgba(255, 255, 0, 0.2);
+    border-left: 2px solid var(--accent);
+}
+
+[data-theme="dark"] .json-miller-container .json-line.highlight {
+    background: rgba(255, 255, 0, 0.1);
+}
+
+/* Arrows for complex types */
+.json-miller-container .arrow {
+    margin-left: auto;
+    color: var(--text);
+    opacity: 0.5;
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s, color 0.2s;
+}
+
+.json-miller-container .row.active .arrow {
+    color: var(--accent);
+    opacity: 1;
+    transform: translateX(2px);
+}
+
+/* Buttons */
+.json-miller-container button {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 0.2s;
+    font-family: inherit;
+}
+
+.json-miller-container button:hover {
+    opacity: 0.9;
+}
+
+/* Scrollbar styling */
+.json-miller-container ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.json-miller-container ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.json-miller-container ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.json-miller-container ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
+
+/* Ghost Button for "Add Item" */
+.json-miller-container .add-item-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    /* Prevent layout shift */
+    color: var(--accent);
+    margin: 10px;
+    width: calc(100% - 20px);
+    opacity: 0.5;
+    transition: all 0.2s;
+}
+
+.json-miller-container .add-item-btn:hover {
+    background: rgba(var(--accent), 0.1);
+    opacity: 0.7;
+    border: 1px dashed var(--accent);
+}
+
+/* Textarea for long text */
+.json-miller-container textarea {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 0;
+    border-radius: 0;
+    width: 100%;
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 24px;
+    line-height: 1.4;
+    display: block;
+}
+
+.json-miller-container textarea:focus {
+    outline: none;
+    border-bottom: 2px solid var(--accent);
+    background: rgba(var(--accent), 0.05);
+}
+
+/* Optional Fields: "+ Property" Button */
+.json-miller-container .add-property-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text);
+    margin: 10px;
+    width: calc(100% - 20px);
+    opacity: 0.5;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+}
+
+.json-miller-container .add-property-btn:hover {
+    opacity: 0.7;
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px dashed var(--text);
+}
+
+/* Property Dropdown (Popover) */
+.json-miller-container .property-dropdown {
+    position: absolute;
+    background: var(--col-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    z-index: 100;
+    min-width: 150px;
+    overflow: hidden;
+    animation: fadeIn 0.1s ease-out;
+}
+
+.json-miller-container .property-dropdown-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text);
+    transition: background 0.2s;
+}
+
+.json-miller-container .property-dropdown-item:hover {
+    background: var(--hover);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Deletion: Hover-to-Reveal Trash Icon */
+.json-miller-container .delete-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text);
+    opacity: 0;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 4px;
+    transition: all 0.2s;
+    pointer-events: none;
+}
+
+.json-miller-container .row:hover .delete-btn {
+    opacity: 0.4;
+    pointer-events: auto;
+}
+
+.json-miller-container .delete-btn:hover {
+    opacity: 1 !important;
+    color: #ef233c;
+}
+
+.json-miller-container .delete-btn.confirm {
+    opacity: 1 !important;
+    color: #ef233c;
+    animation: shake 0.3s;
+}
+
+@keyframes shake {
+    0% {
+        transform: translateY(-50%) translateX(0);
+    }
+
+    25% {
+        transform: translateY(-50%) translateX(-2px);
+    }
+
+    50% {
+        transform: translateY(-50%) translateX(2px);
+    }
+
+    75% {
+        transform: translateY(-50%) translateX(-2px);
+    }
+
+    100% {
+        transform: translateY(-50%) translateX(0);
+    }
+}
+
+/* Required Fields */
+.json-miller-container .key-label.required {
+    font-weight: 700;
+}
+
+.json-miller-container .key-label.optional {
+    font-weight: 400;
+}
+
+/* Lock Icon */
+.json-miller-container .lock-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text);
+    opacity: 0.3;
+    font-size: 0.9rem;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Validation Errors */
+.json-miller-container .row.has-error {
+    border-left: 4px solid #ef233c;
+    background: rgba(239, 35, 60, 0.05);
+}
+
+.json-miller-container .row.child-error {
+    border-left: 4px solid rgba(239, 35, 60, 0.4);
+}
+
+.json-miller-container .row.has-error .key-label,
+.json-miller-container .row.child-error .key-label {
+    color: #ef233c;
+}
+
+.json-miller-container .input-error {
+    border-bottom: 2px solid #ef233c !important;
+}
+
+/* Tooltip for Lock */
+.json-miller-container .lock-icon:hover::after {
+    content: "Required field";
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+}
