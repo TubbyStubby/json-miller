@@ -23,7 +23,7 @@
     --text: #202124;
     --accent: #1a73e8;
     --accent-active: #fce8e6;
-    --hover: #f1f3f4;
+    --hover: #f1f3f48e;
     --active-row: #e8f0fe;
     --input-bg: rgba(0, 0, 0, 0.05);
     --header-bg: #ffffff;
@@ -44,7 +44,7 @@ body {
     transition: background 0.3s, color 0.3s;
 }
 
-header {
+.json-miller-container header {
     padding: 15px 25px;
     border-bottom: 1px solid var(--border);
     display: flex;
@@ -55,20 +55,25 @@ header {
     z-index: 10;
 }
 
-header button {
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
+.json-miller-container header button {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
     cursor: pointer;
-    font-weight: 500;
-    transition: opacity 0.2s;
-    font-family: inherit;
+    transition: all 0.2s;
 }
 
-header button:hover {
-    opacity: 0.9;
+.json-miller-container header button:hover {
+    background: var(--hover);
+    color: var(--accent);
+    border-color: var(--accent);
 }
 
 /* --- JsonMiller Library Styles --- */
