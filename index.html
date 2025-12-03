@@ -8,7 +8,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,slnt,wdth,wght,GRAD,ROND@6..144,-10..0,25..151,1..1000,0..100,0..100&display=swap');
     </style>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dist/json-miller.css">
 </head>
 
 <body>
@@ -25,14 +25,24 @@
     <!-- Container for the editor -->
     <div id="editor-wrapper" style="display: flex; flex: 1; min-height: 0; overflow: hidden;"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ajv/8.17.1/ajv7.bundle.min.js"
-        integrity="sha512-qRe8bjiTECWi8HUTdrC46oVVFzfG746FB/6QkIcQdoRG16NNlAaNMCAYPBNxiqVoQTjIbYZTDLXUmdcmghVUjQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- Bundled Library -->
     <script type="module">
-        import ajvFormats from 'https://cdn.jsdelivr.net/npm/ajv-formats@3.0.1/+esm';
-        window.ajvFormats = ajvFormats.default;
+        import { JsonMiller } from './dist/json-miller.bundle.js?v=2';
+        window.JsonMiller = JsonMiller;
+        console.log('Module loaded', JsonMiller);
+    </script>
 
-        import { JsonMiller } from './script.js';
+    <script>
+        // Wait for module to load
+        window.addEventListener('load', () => {
+            const JsonMiller = window.JsonMiller;
+            if (JsonMiller) {
+                window.editor = new JsonMiller('#editor-wrapper', {
+                    data: initialData,
+                    schema: schema
+                });
+            }
+        });
 
         // Sample Data & Schema (Moved from script.js)
         const schema = { "type": "object", "properties": { "id": { "type": "number" }, "match_config": { "title": "match_config", "type": "object", "properties": { "player_level_cap": { "type": "number", "default": 25 }, "investment": { "type": "array", "items": { "title": "itemOf_investment", "type": "object", "properties": { "id": { "type": "number" }, "type": { "type": "string" }, "quantity": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "rewards": { "title": "rewards", "type": "object", "properties": { "win": { "type": "array", "items": { "title": "itemOf_win", "type": "object", "properties": { "id": { "type": "number" }, "type": { "type": "string" }, "quantity": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "loss": { "type": "array", "items": { "title": "itemOf_loss", "type": "object", "properties": { "id": { "type": "number" }, "type": { "type": "string" }, "quantity": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "tie": { "type": "array", "items": { "title": "itemOf_tie", "type": "object", "properties": { "id": { "type": "number" }, "type": { "type": "string" }, "quantity": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } } } }, "matchmaking": { "title": "matchmaking", "type": "object", "properties": { "opponent_buffer": { "type": "number", "default": 2 } } }, "cards_per_match": { "type": "number", "default": 2 } } }, "starts_at": { "type": "string", "format": "date-time" }, "ends_at": { "type": "string", "format": "date-time" }, "sessions": { "type": "array", "items": { "title": "itemOf_sessions", "type": "object", "properties": { "id": { "type": "number" }, "start_time": { "type": "string" }, "end_time": { "type": "string" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "general_info": { "title": "general_info", "type": "object", "properties": { "guidelines_data": { "type": "array", "items": { "title": "itemOf_guidelines_data", "type": "object", "properties": { "title": { "type": "string", "default": "Title" }, "body": { "type": "string", "default": "Description" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "infographics_data": { "type": "array", "items": { "title": "itemOf_infographics_data", "type": "object", "properties": { "url": { "type": "string", "default": "" }, "identifier": { "type": "string", "default": "" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "leaderboard": { "title": "leaderboard", "type": "object", "properties": { "lb_discord_link": { "type": "string", "default": "" }, "rewards": { "title": "rewards", "type": "object", "properties": { "url": { "type": "string", "default": "" }, "identifier": { "type": "string", "default": "" } } } } }, "event_items_info_text": { "type": "string", "default": "" } } }, "event_skus": { "type": "array", "items": { "title": "itemOf_event_skus", "type": "object", "properties": { "id": { "type": "number" }, "name": { "type": "string" }, "rewards": { "type": "array", "items": { "title": "itemOf_rewards", "type": "object", "properties": { "id": { "type": "number" }, "type": { "type": "string" }, "quantity": { "type": "number" }, "rarity": { "type": "string" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "price": { "type": "array", "items": { "title": "itemOf_price", "type": "object", "properties": { "id": { "type": "number" }, "type": { "type": "string" }, "quantity": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "url": { "type": "string" }, "identifier": { "type": "string" }, "infographic": { "type": "string" }, "max_allowable_buys": { "type": "number" }, "daily_max_allowable_buys": { "type": "number" }, "characters": { "type": "array", "items": { "type": "number" } }, "order": { "type": "number" }, "status": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" } } } }, "status": { "type": "number" }, "release_version": { "type": "number" }, "_id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" }, "__v": { "type": "number" } }, "required": ["id", "starts_at", "ends_at", "release_version"] };

@@ -1,6 +1,10 @@
 /**
  * JsonMiller - A Miller Column JSON Editor Library
  */
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
+import './style.css';
+
 export class JsonMiller {
     constructor(container, config = {}) {
         this.container = typeof container === 'string' ? document.querySelector(container) : container;
@@ -50,14 +54,9 @@ export class JsonMiller {
             return;
         }
 
-        // Fallback to global window.ajv7 if available (legacy support)
-        if (window.ajv7 && window.ajvFormats) {
-            const Ajv = window.ajv7.Ajv;
-            this._ajv = window.ajvFormats.default(new Ajv({ allErrors: true }));
-            this._validateFn = this._ajv.compile(this.rootSchema);
-        } else {
-            console.warn("JsonMiller: AJV not found. Validation disabled.");
-        }
+        // Use bundled Ajv
+        this._ajv = addFormats(new Ajv({ allErrors: true }));
+        this._validateFn = this._ajv.compile(this.rootSchema);
     }
 
     get ajv() {
