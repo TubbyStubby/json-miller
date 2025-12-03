@@ -19,7 +19,7 @@
 
     <!-- Bundled Library -->
     <script type="module">
-        import { JsonMiller } from './dist/json-miller.bundle.js?v=3';
+        import { JsonMiller } from './dist/json-miller.bundle.js?v=5';
         window.JsonMiller = JsonMiller;
         console.log('Module loaded', JsonMiller);
     </script>
@@ -31,7 +31,8 @@
             if (JsonMiller) {
                 window.editor = new JsonMiller('#editor-wrapper', {
                     data: initialData,
-                    schema: schema
+                    schema: schema,
+                    title: "ABR Config"
                 });
             }
         });

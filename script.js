@@ -12,6 +12,7 @@ export class JsonMiller {
             throw new Error("JsonMiller: Container not found");
         }
 
+        this.title = config.title || "Miller Column JSON Editor";
         this.data = config.data || {};
         this.rootSchema = config.schema || {};
         this.ajvInstance = config.ajv || null;
@@ -33,6 +34,7 @@ export class JsonMiller {
         this._loadAjv();
 
         this.init();
+
     }
 
     _createDom() {
@@ -41,7 +43,7 @@ export class JsonMiller {
         // Create Header
         this.header = document.createElement('header');
         this.header.innerHTML = `
-            <h3>Miller Column JSON Editor</h3>
+            <h3>${this.title}</h3>
             <div style="display: flex; gap: 10px;">
                 <button class="jm-theme-btn">🌙 Dark Mode</button>
                 <button class="jm-lock-btn">🔓 Unlock</button>
