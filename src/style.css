@@ -266,7 +266,7 @@
     appearance: none;
     -webkit-appearance: none;
     text-align: center;
-    min-width: 24px;
+    max-width: max-content;
 }
 
 .json-miller-container .type-badge:hover {

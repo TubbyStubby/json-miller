@@ -12,8 +12,6 @@ export class JsonMiller {
             throw new Error("JsonMiller: Container not found");
         }
 
-        this.container.style.height = '98vh';
-
         this.title = config.title || "Miller Column JSON Editor";
         this.data = config.data || {};
         this.rootSchema = config.schema || {};
