@@ -22,8 +22,9 @@ const config: Config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'tubbystubby', // Usually your GitHub org/user name.
+  organizationName: 'TubbyStubby', // Usually your GitHub org/user name.
   projectName: 'json-miller', // Usually your repo name.
+  deploymentBranch: 'gh-pages',
 
   onBrokenLinks: 'throw',
 
@@ -44,7 +45,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/tubbystubby/json-miller/tree/main/docs/',
+            'https://github.com/TubbyStubby/json-miller/tree/main/docs/',
         },
         blog: false, // Disable blog for now
         theme: {
@@ -75,7 +76,7 @@ const config: Config = {
         },
         { to: '/playground', label: 'Playground', position: 'left' },
         {
-          href: 'https://github.com/tubbystubby/json-miller',
+          href: 'https://github.com/TubbyStubby/json-miller',
           label: 'GitHub',
           position: 'right',
         },
@@ -106,7 +107,7 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/tubbystubby/json-miller',
+              href: 'https://github.com/TubbyStubby/json-miller',
             },
           ],
         },
