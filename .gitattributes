@@ -1,0 +1,30 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Text files
+*.js text
+*.ts text
+*.jsx text
+*.tsx text
+*.json text
+*.css text
+*.scss text
+*.html text
+*.md text
+*.txt text
+*.xml text
+*.yml text
+*.yaml text
+
+# Image files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text
+
+
+# Generated files
+package-lock.json linguist-generated
+docs/** linguist-vendored
