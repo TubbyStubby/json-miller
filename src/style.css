@@ -133,6 +133,7 @@ header button:hover {
     scroll-behavior: smooth;
     padding: 20px;
     gap: 15px;
+    justify-content: center;
 }
 
 /* Columns */
@@ -189,9 +190,10 @@ header button:hover {
 
 .json-miller-container .row-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     margin-bottom: 8px;
+    gap: 8px;
 }
 
 .json-miller-container .key-label {
@@ -255,7 +257,8 @@ header button:hover {
     margin-bottom: 0;
     flex: 0 0 40%;
     max-width: 140px;
-    overflow: hidden;
+    overflow: visible;
+    position: relative;
 }
 
 .json-miller-container .row.scalar-row .key-label {
@@ -263,6 +266,21 @@ header button:hover {
     overflow: hidden;
     text-overflow: ellipsis;
     display: block;
+}
+
+.json-miller-container .row.scalar-row .key-label:hover {
+    position: absolute;
+    left: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--col-bg);
+    z-index: 100;
+    padding: 4px 8px;
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    width: max-content;
+    max-width: 300px;
 }
 
 .json-miller-container .row.scalar-row .input-wrapper {

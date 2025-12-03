@@ -549,8 +549,6 @@ export class JsonMiller {
                 e.stopPropagation();
             };
 
-            rowHeader.appendChild(label);
-
             if (allowedTypes.length > 1 || !fieldSchema) {
                 rowHeader.appendChild(typeBadge);
             } else {
@@ -559,6 +557,8 @@ export class JsonMiller {
                 staticBadge.innerText = typeIcons[valueType] || valueType;
                 rowHeader.appendChild(staticBadge);
             }
+
+            rowHeader.appendChild(label);
 
             row.appendChild(rowHeader);
 
