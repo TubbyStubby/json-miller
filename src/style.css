@@ -119,6 +119,26 @@ header button:hover {
     opacity: 0.5;
 }
 
+.json-miller-container .breadcrumb-copy-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 4px;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.json-miller-container .breadcrumb-copy-btn:hover {
+    opacity: 1;
+    background: rgba(var(--accent), 0.1);
+    color: var(--accent);
+}
+
 .json-miller-container .jm-workspace {
     display: flex;
     flex: 1;
