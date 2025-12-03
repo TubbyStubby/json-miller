@@ -297,23 +297,28 @@ header button:hover {
 
 .json-miller-container input,
 .json-miller-container select {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.05);
     border: none;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid transparent;
     color: var(--text);
-    padding: 8px 0;
-    border-radius: 0;
+    padding: 8px;
+    border-radius: 4px;
     width: 100%;
     font-size: 0.9rem;
-    transition: border-color 0.2s, background 0.2s;
+    transition: all 0.2s;
     font-family: inherit;
 }
 
 .json-miller-container input:focus,
 .json-miller-container select:focus {
     outline: none;
-    border-bottom: 2px solid var(--accent);
-    background: rgba(var(--accent), 0.05);
+    background: rgba(var(--accent), 0.1);
+    border-bottom: 1px solid var(--accent);
+}
+
+/* Highlight label on focus */
+.json-miller-container .row:focus-within .key-label {
+    color: var(--accent);
 }
 
 /* Output Pane */
