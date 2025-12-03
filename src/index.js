@@ -19,6 +19,9 @@ export class JsonMiller {
         this.rootSchema = config.schema || {};
         this.ajvInstance = config.ajv || null;
         this.isLocked = false;
+        this.showLockBtn = config.showLockBtn !== false; // Default true
+        this.enableJsonEdit = config.enableJsonEdit === true; // Default false
+        this.isJsonEditMode = false;
 
         this.selectionPath = []; // Array of keys/indices
         this.focusedPath = null;
@@ -60,9 +63,13 @@ export class JsonMiller {
                 <button class="jm-theme-btn" title="Toggle Theme">
                     <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Z"/></svg>
                 </button>
-                <button class="jm-lock-btn" title="Lock/Unlock">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h80v80h-80v-160q0-50-35-85t-85-35q-50 0-85 35t-35 85v80H240v400h480v-240h80v240q0 33-23.5 56.5T720-80H240Zm240-120q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280Z"/></svg>
                 </button>
+                ${this.showLockBtn ? `<button class="jm-lock-btn" title="Lock/Unlock">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h80v80h-80v-160q0-50-35-85t-85-35q-50 0-85 35t-35 85v80H240v400h480v-240h80v240q0 33-23.5 56.5T720-80H240Zm240-120q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280Z"/></svg>
+                </button>` : ''}
+                ${this.enableJsonEdit ? `<button class="jm-json-edit-btn" title="Edit JSON">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>
+                </button>` : ''}
                 <button class="jm-copy-btn" title="Copy JSON">
                     <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/></svg>
                 </button>
@@ -98,11 +105,13 @@ export class JsonMiller {
         this.themeBtn = this.header.querySelector('.jm-theme-btn');
         this.lockBtn = this.header.querySelector('.jm-lock-btn');
         this.copyBtn = this.header.querySelector('.jm-copy-btn');
+        this.jsonEditBtn = this.header.querySelector('.jm-json-edit-btn');
 
         // Bind events
         this.themeBtn.onclick = () => this.toggleTheme();
-        this.lockBtn.onclick = () => this.toggleLock();
+        if (this.lockBtn) this.lockBtn.onclick = () => this.toggleLock();
         this.copyBtn.onclick = () => this.copyJson();
+        if (this.jsonEditBtn) this.jsonEditBtn.onclick = () => this.toggleJsonEditMode();
     }
 
     _loadAjv() {
@@ -211,6 +220,33 @@ export class JsonMiller {
     copyJson() {
         navigator.clipboard.writeText(JSON.stringify(this.data, null, 2));
         alert("JSON copied to clipboard");
+    }
+
+    toggleJsonEditMode() {
+        if (this.isJsonEditMode) {
+            // Saving
+            const textarea = this.outputContainer.querySelector('textarea');
+            if (textarea) {
+                try {
+                    this.isJsonEditMode = false;
+                    const editIcon = `<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>`;
+                    this.jsonEditBtn.innerHTML = editIcon;
+                    this.jsonEditBtn.title = "Edit JSON";
+                    const newData = JSON.parse(textarea.value);
+                    this.setData(newData);
+                } catch (e) {
+                    alert("Invalid JSON: " + e.message);
+                    return; // Stay in edit mode
+                }
+            }
+        } else {
+            // Switching to edit mode
+            this.isJsonEditMode = true;
+            const saveIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="m20.71 9.29l-6-6a1 1 0 0 0-.32-.21A1.09 1.09 0 0 0 14 3H6a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-8a1 1 0 0 0-.29-.71ZM9 5h4v2H9Zm6 14H9v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1Zm4-1a1 1 0 0 1-1 1h-1v-3a3 3 0 0 0-3-3h-4a3 3 0 0 0-3 3v3H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1v3a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V6.41l4 4Z"/></svg>`
+            this.jsonEditBtn.innerHTML = saveIcon;
+            this.jsonEditBtn.title = "Save JSON";
+            this.render();
+        }
     }
 
     // --- Data Helpers ---
@@ -350,7 +386,25 @@ export class JsonMiller {
         this.editorContainer.innerHTML = '';
 
         // Update Output JSON
-        this.outputContainer.innerHTML = this.renderJsonHtml(this.data);
+        if (this.isJsonEditMode) {
+            this.outputContainer.innerHTML = '';
+            const textarea = document.createElement('textarea');
+            textarea.value = JSON.stringify(this.data, null, 2);
+            textarea.style.width = '100%';
+            textarea.style.height = '100%';
+            textarea.style.border = 'none';
+            textarea.style.resize = 'none';
+            textarea.style.background = 'transparent';
+            textarea.style.color = 'inherit';
+            textarea.style.fontFamily = 'monospace';
+            textarea.style.outline = 'none';
+            this.outputContainer.appendChild(textarea);
+
+            // Focus and select all? Maybe just focus.
+            textarea.focus();
+        } else {
+            this.outputContainer.innerHTML = this.renderJsonHtml(this.data);
+        }
 
         // Render Breadcrumbs
         this.renderBreadcrumbs();
