@@ -419,18 +419,19 @@ header button:hover {
 /* Ghost Button for "Add Item" */
 .json-miller-container .add-item-btn {
     background: transparent;
-    border: 1px dashed var(--accent);
+    border: 1px solid transparent;
+    /* Prevent layout shift */
     color: var(--accent);
     margin: 10px;
     width: calc(100% - 20px);
-    opacity: 0.7;
+    opacity: 0.5;
     transition: all 0.2s;
 }
 
 .json-miller-container .add-item-btn:hover {
     background: rgba(var(--accent), 0.1);
-    opacity: 1;
-    border-style: solid;
+    opacity: 0.7;
+    border: 1px dashed var(--accent);
 }
 
 /* Textarea for long text */
@@ -459,7 +460,7 @@ header button:hover {
 /* Optional Fields: "+ Property" Button */
 .json-miller-container .add-property-btn {
     background: transparent;
-    border: 1px dotted var(--text);
+    border: 1px solid transparent;
     color: var(--text);
     margin: 10px;
     width: calc(100% - 20px);
@@ -470,9 +471,9 @@ header button:hover {
 }
 
 .json-miller-container .add-property-btn:hover {
-    opacity: 1;
+    opacity: 0.7;
     background: rgba(0, 0, 0, 0.05);
-    border-style: solid;
+    border: 1px dashed var(--text);
 }
 
 /* Property Dropdown (Popover) */
