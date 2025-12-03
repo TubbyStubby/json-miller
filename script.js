@@ -45,9 +45,9 @@ export class JsonMiller {
         this.header.innerHTML = `
             <h3>${this.title}</h3>
             <div style="display: flex; gap: 10px;">
-                <button class="jm-theme-btn">🌙 Dark Mode</button>
-                <button class="jm-lock-btn">🔓 Unlock</button>
-                <button class="jm-copy-btn">Copy JSON</button>
+                <button class="jm-theme-btn">🌙</button>
+                <button class="jm-lock-btn">🔓</button>
+                <button class="jm-copy-btn">📋</button>
             </div>
         `;
 
@@ -132,14 +132,14 @@ export class JsonMiller {
     lock() {
         this.isLocked = true;
         this.container.classList.add('jm-locked');
-        if (this.lockBtn) this.lockBtn.innerText = '🔒 Lock';
+        if (this.lockBtn) this.lockBtn.innerText = '🔒';
         this.render({ preserveScroll: true });
     }
 
     unlock() {
         this.isLocked = false;
         this.container.classList.remove('jm-locked');
-        if (this.lockBtn) this.lockBtn.innerText = '🔓 Unlock';
+        if (this.lockBtn) this.lockBtn.innerText = '🔓';
         this.render({ preserveScroll: true });
     }
 
@@ -182,10 +182,10 @@ export class JsonMiller {
     _updateTheme() {
         if (this.isDark) {
             document.documentElement.setAttribute('data-theme', 'dark');
-            if (this.themeBtn) this.themeBtn.innerText = '🌙 Dark Mode';
+            if (this.themeBtn) this.themeBtn.innerText = '🌙';
         } else {
             document.documentElement.setAttribute('data-theme', 'light');
-            if (this.themeBtn) this.themeBtn.innerText = '☀️ Light Mode';
+            if (this.themeBtn) this.themeBtn.innerText = '☀️';
         }
     }
 
