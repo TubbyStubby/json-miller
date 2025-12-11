@@ -13,25 +13,18 @@
     <div id="editor-wrapper" style="height: 98vh;"></div>
 
     <!-- Bundled Library -->
-    <script type="module">
-        import { JsonMiller } from '../dist/json-miller.bundle.js?v=5';
-        window.JsonMiller = JsonMiller;
-        console.log('Module loaded', JsonMiller);
-    </script>
+    <script src="./dist/bundle.js?v=6"></script>
 
     <script>
         // Wait for module to load
         window.addEventListener('load', () => {
-            const JsonMiller = window.JsonMiller;
-            if (JsonMiller) {
-                window.editor = new JsonMiller('#editor-wrapper', {
-                    data: initialData,
-                    schema: schema,
-                    enableJsonEdit: true,
-                    showLockBtn: false,
-                    title: "Complex Object"
-                });
-            }
+            window.editor = new JsonMiller.JsonMiller('#editor-wrapper', {
+                data: initialData,
+                schema: schema,
+                enableJsonEdit: true,
+                showLockBtn: false,
+                title: "Complex Object"
+            });
         });
 
         // Sample Data & Schema (Moved from script.js)
