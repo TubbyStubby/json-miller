@@ -4,10 +4,13 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import styles from './style.css';
+import { arrowIcon, copyIcon, darkThemeIcon, editIcon, filledLockIcon, lightThemeIcon, lockIcon, saveIcon, tickIcon, trashIcon, unlockIcon } from './svg';
 
 export class JsonMiller {
     constructor(container, config = {}) {
-        this.container = typeof container === 'string' ? document.querySelector(container) : container;
+        this.container = typeof container === 'string' ?
+            document.querySelector(container) :
+            container;
         if (!this.container) {
             throw new Error("JsonMiller: Container not found");
         }
@@ -15,10 +18,9 @@ export class JsonMiller {
         this.title = config.title || "Miller Column JSON Editor";
         this.data = config.data || {};
         this.rootSchema = config.schema || {};
-        this.ajvInstance = config.ajv || null;
         this.isLocked = false;
-        this.showLockBtn = config.showLockBtn !== false; // Default true
-        this.enableJsonEdit = config.enableJsonEdit === true; // Default false
+        this.showLockBtn = config.showLockBtn === true;
+        this.showJsonEditBtn = config.showJsonEditBtn === true;
         this.isJsonEditMode = false;
 
         this.selectionPath = []; // Array of keys/indices
@@ -34,7 +36,8 @@ export class JsonMiller {
         this._initTheme();
 
         // Init AJV
-        this._loadAjv();
+        this._ajv = addFormats(new Ajv({ allErrors: true }));
+        this._validateFn = this._ajv.compile(this.rootSchema);
 
         this.init();
 
@@ -59,17 +62,17 @@ export class JsonMiller {
             <h3>${this.title}</h3>
             <div style="display: flex; gap: 10px;">
                 <button class="jm-theme-btn" title="Toggle Theme">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Z"/></svg>
+                    ${lightThemeIcon}
                 </button>
                 </button>
                 ${this.showLockBtn ? `<button class="jm-lock-btn" title="Lock/Unlock">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h80v80h-80v-160q0-50-35-85t-85-35q-50 0-85 35t-35 85v80H240v400h480v-240h80v240q0 33-23.5 56.5T720-80H240Zm240-120q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280Z"/></svg>
+                    ${lockIcon}
                 </button>` : ''}
-                ${this.enableJsonEdit ? `<button class="jm-json-edit-btn" title="Edit JSON">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>
+                ${this.showJsonEditBtn ? `<button class="jm-json-edit-btn" title="Edit JSON">
+                    ${editIcon}
                 </button>` : ''}
                 <button class="jm-copy-btn" title="Copy JSON">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/></svg>
+                    ${copyIcon}
                 </button>
             </div>
         `;
@@ -112,18 +115,6 @@ export class JsonMiller {
         if (this.jsonEditBtn) this.jsonEditBtn.onclick = () => this.toggleJsonEditMode();
     }
 
-    _loadAjv() {
-        if (this.ajvInstance) {
-            this._ajv = this.ajvInstance;
-            this._validateFn = this._ajv.compile(this.rootSchema);
-            return;
-        }
-
-        // Use bundled Ajv
-        this._ajv = addFormats(new Ajv({ allErrors: true }));
-        this._validateFn = this._ajv.compile(this.rootSchema);
-    }
-
     get ajv() {
         return this._ajv;
     }
@@ -133,9 +124,6 @@ export class JsonMiller {
     }
 
     init() {
-        // If AJV is loading async (e.g. via script tag), we might need to wait.
-        // But for a library, we usually expect dependencies to be ready.
-        // We'll just render.
         this.render();
     }
 
@@ -143,29 +131,28 @@ export class JsonMiller {
 
     setData(data) {
         this.data = data;
-        this.selectionPath = []; // Reset selection? Or try to keep it? Resetting is safer.
+        // Reset selection
+        this.selectionPath = [];
         this.render();
     }
 
     setSchema(schema) {
         this.rootSchema = schema;
-        if (this._ajv) {
-            this._validateFn = this._ajv.compile(this.rootSchema);
-        }
+        this._validateFn = this._ajv.compile(this.rootSchema);
         this.render();
     }
 
     lock() {
         this.isLocked = true;
         this.container.classList.add('jm-locked');
-        if (this.lockBtn) this.lockBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm240-120q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></svg>';
+        if (this.lockBtn) this.lockBtn.innerHTML = unlockIcon;
         this.render({ preserveScroll: true });
     }
 
     unlock() {
         this.isLocked = false;
         this.container.classList.remove('jm-locked');
-        if (this.lockBtn) this.lockBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h80v80h-80v-160q0-50-35-85t-85-35q-50 0-85 35t-35 85v80H240v400h480v-240h80v240q0 33-23.5 56.5T720-80H240Zm240-120q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280Z"/></svg>';
+        if (this.lockBtn) this.lockBtn.innerHTML = lockIcon;
         this.render({ preserveScroll: true });
     }
 
@@ -208,15 +195,15 @@ export class JsonMiller {
     _updateTheme() {
         if (this.isDark) {
             this.container.setAttribute('data-theme', 'dark');
-            if (this.themeBtn) this.themeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Z"/></svg>';
+            if (this.themeBtn) this.themeBtn.innerHTML = lightThemeIcon;
         } else {
             this.container.setAttribute('data-theme', 'light');
-            if (this.themeBtn) this.themeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M480-280q-83 0-141.5-58.5T280-480q0-83 58.5-141.5T480-680q83 0 141.5 58.5T680-480q0 83-58.5 141.5T480-280ZM200-440H40v-80h160v80Zm720 0H760v-80h160v80ZM440-760v-160h80v160h-80Zm0 720v-160h80v160h-80ZM256-650l-101-97 57-59 96 100-52 56Zm492 496-97-101 53-55 101 97-57 59Zm-98-550 97-101 59 57-100 96-56-52ZM154-212l101-97 55 53-97 101-59-57Z"/></svg>';
+            if (this.themeBtn) this.themeBtn.innerHTML = darkThemeIcon;
         }
     }
 
     copyJson() {
-        navigator.clipboard.writeText(JSON.stringify(this.data, null, 2));
+        navigator.clipboard.writeText(JSON.stringify(this.data));
         alert("JSON copied to clipboard");
     }
 
@@ -227,7 +214,6 @@ export class JsonMiller {
             if (textarea) {
                 try {
                     this.isJsonEditMode = false;
-                    const editIcon = `<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>`;
                     this.jsonEditBtn.innerHTML = editIcon;
                     this.jsonEditBtn.title = "Edit JSON";
                     const newData = JSON.parse(textarea.value);
@@ -240,7 +226,6 @@ export class JsonMiller {
         } else {
             // Switching to edit mode
             this.isJsonEditMode = true;
-            const saveIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="m20.71 9.29l-6-6a1 1 0 0 0-.32-.21A1.09 1.09 0 0 0 14 3H6a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-8a1 1 0 0 0-.29-.71ZM9 5h4v2H9Zm6 14H9v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1Zm4-1a1 1 0 0 1-1 1h-1v-3a3 3 0 0 0-3-3h-4a3 3 0 0 0-3 3v3H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1v3a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V6.41l4 4Z"/></svg>`
             this.jsonEditBtn.innerHTML = saveIcon;
             this.jsonEditBtn.title = "Save JSON";
             this.render();
@@ -385,23 +370,9 @@ export class JsonMiller {
 
         // Update Output JSON
         if (this.isJsonEditMode) {
-            this.outputContainer.innerHTML = '';
-            const textarea = document.createElement('textarea');
-            textarea.value = JSON.stringify(this.data, null, 2);
-            textarea.style.width = '100%';
-            textarea.style.height = '100%';
-            textarea.style.border = 'none';
-            textarea.style.resize = 'none';
-            textarea.style.background = 'transparent';
-            textarea.style.color = 'inherit';
-            textarea.style.fontFamily = 'monospace';
-            textarea.style.outline = 'none';
-            this.outputContainer.appendChild(textarea);
-
-            // Focus and select all? Maybe just focus.
-            textarea.focus();
+            this.renderJsonTextArea();
         } else {
-            this.outputContainer.innerHTML = this.renderJsonHtml(this.data);
+            this.renderJsonHtml();
         }
 
         // Render Breadcrumbs
@@ -435,7 +406,29 @@ export class JsonMiller {
         }
     }
 
-    renderJsonHtml(data, path = []) {
+    renderJsonTextArea() {
+        this.outputContainer.innerHTML = '';
+        const textarea = document.createElement('textarea');
+        textarea.value = JSON.stringify(this.data, null, 2);
+        textarea.style.width = '100%';
+        textarea.style.height = '100%';
+        textarea.style.border = 'none';
+        textarea.style.resize = 'none';
+        textarea.style.background = 'transparent';
+        textarea.style.color = 'inherit';
+        textarea.style.fontFamily = 'monospace';
+        textarea.style.outline = 'none';
+        this.outputContainer.appendChild(textarea);
+
+        // Focus and select all? Maybe just focus.
+        textarea.focus();
+    }
+
+    renderJsonHtml() {
+        this.outputContainer.innerHTML = this.generateJsonHtml(this.data);
+    }
+
+    generateJsonHtml(data, path = []) {
         if (data === null) return `<span class="json-value type-null">null</span>`;
         if (typeof data === 'string') return `<span class="json-value type-string">"${data}"</span>`;
         if (typeof data === 'number') return `<span class="json-value type-number">${data}</span>`;
@@ -457,7 +450,7 @@ export class JsonMiller {
             const comma = isLast ? '' : ',';
             const indent = '  '.repeat(path.length + 1);
             const keyHtml = isArray ? '' : `<span class="json-key">"${key}"</span>: `;
-            const valueHtml = this.renderJsonHtml(value, currentPath);
+            const valueHtml = this.generateJsonHtml(value, currentPath);
 
             html += `<div class="json-line" data-path='${pathStr}'>${indent}${keyHtml}${valueHtml}${comma}</div>`;
         });
@@ -497,7 +490,7 @@ export class JsonMiller {
         if (this.selectionPath.length > 0) {
             const copyBtn = document.createElement('button');
             copyBtn.className = 'breadcrumb-copy-btn';
-            copyBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 -960 960 960" width="16" fill="currentColor"><path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/></svg>';
+            copyBtn.innerHTML = copyIcon;
             copyBtn.title = 'Copy Path';
             copyBtn.onclick = (e) => {
                 e.stopPropagation();
@@ -514,7 +507,7 @@ export class JsonMiller {
 
                 // Visual feedback
                 const originalIcon = copyBtn.innerHTML;
-                copyBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 -960 960 960" width="16" fill="currentColor"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>';
+                copyBtn.innerHTML = tickIcon;
                 setTimeout(() => {
                     copyBtn.innerHTML = originalIcon;
                 }, 1500);
@@ -743,7 +736,7 @@ export class JsonMiller {
             } else {
                 const arrow = document.createElement('span');
                 arrow.className = 'arrow';
-                arrow.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>';
+                arrow.innerHTML = arrowIcon;
                 rowHeader.appendChild(arrow);
             }
 
@@ -764,12 +757,12 @@ export class JsonMiller {
             if (isRequired) {
                 const lockIcon = document.createElement('span');
                 lockIcon.className = 'lock-icon';
-                lockIcon.innerHTML = '<svg fill="currentColor" width="15" height="15" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 22h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2V7A5 5 0 0 0 7 7v2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2zm7-4.5a2 2 0 1 1 2-2 2 2 0 0 1-2 2zM9 9V7a3 3 0 0 1 6 0v2H9z"/></svg>';
+                lockIcon.innerHTML = filledLockIcon;
                 row.appendChild(lockIcon);
             } else {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'delete-btn';
-                deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>';
+                deleteBtn.innerHTML = trashIcon;
                 deleteBtn.title = 'Delete Item';
                 deleteBtn.disabled = this.isLocked;
 
