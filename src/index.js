@@ -872,9 +872,7 @@ export class JsonMiller {
 
                         const dropdown = document.createElement('div');
                         dropdown.className = 'property-dropdown';
-                        dropdown.style.top = (addPropBtn.offsetTop + addPropBtn.offsetHeight) + 'px';
                         dropdown.style.left = addPropBtn.offsetLeft + 'px';
-                        dropdown.style.width = addPropBtn.offsetWidth + 'px';
 
                         missingKeys.forEach(key => {
                             const item = document.createElement('div');
