@@ -312,7 +312,7 @@ export class JsonMiller {
         const type = Array.isArray(schema.type) ? schema.type[0] : schema.type;
 
         if (type === 'string') return "";
-        if (type === 'number') return 0;
+        if (type === 'number' || type === 'integer') return 0;
         if (type === 'boolean') return false;
         if (type === 'object') {
             const obj = {};
@@ -596,6 +596,29 @@ export class JsonMiller {
         col.appendChild(header);
 
         const keys = Object.keys(dataContext);
+
+        // Auto-add missing required fields if not locked
+        if (!this.isLocked && !Array.isArray(dataContext) && typeof dataContext === 'object') {
+            const schema = this.getSchemaForPath(path);
+            if (schema && schema.required) {
+                let added = false;
+                schema.required.forEach(reqKey => {
+                    if (!keys.includes(reqKey)) {
+                        // Calculate default value
+                        let defaultVal = "";
+                        if (schema.properties && schema.properties[reqKey]) {
+                            defaultVal = this.getDefaultValue(schema.properties[reqKey]);
+                        }
+
+                        // Set value in data (this doesn't trigger re-render if we are careful, 
+                        // but setValueAt does calls render. better modify object directly here)
+                        dataContext[reqKey] = defaultVal;
+                        keys.push(reqKey);
+                        added = true;
+                    }
+                });
+            }
+        }
 
         keys.forEach(key => {
             const fullPath = [...path, Array.isArray(dataContext) ? Number(key) : key];
