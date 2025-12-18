@@ -18,16 +18,17 @@ export class JsonMiller {
         this.title = config.title || "Miller Column JSON Editor";
         this.data = config.data || {};
         this.rootSchema = config.schema || {};
-        this.isLocked = false;
         this.showLockBtn = config.showLockBtn === true;
-        this.showJsonEditBtn = config.showJsonEditBtn === true;
-        this.isJsonEditMode = false;
+        this.disableOutput = config.disableOutput === true;
+        this.showEditBtn = config.showJsonEditBtn === true;
 
-        this.selectionPath = []; // Array of keys/indices
+        this.isJsonEditMode = false;
+        this.isLocked = false;
+        this.selectionPath = [];
         this.focusedPath = null;
 
         // Theme state
-        this.isDark = true;
+        this.isDark = config.defaultDark === true;
 
         // Create internal DOM structure
         this._createDom();
@@ -40,7 +41,10 @@ export class JsonMiller {
         this._validateFn = this._ajv.compile(this.rootSchema);
 
         this.init();
+    }
 
+    get showJsonEditBtn() {
+        return this.showEditBtn && !this.disableOutput;
     }
 
     _createDom() {
@@ -91,7 +95,8 @@ export class JsonMiller {
             <div class="jm-breadcrumbs"></div>
             <div class="jm-workspace">
                 <div class="jm-editor"></div>
-                <div class="jm-output"></div>
+                ${this.disableOutput ? '' :
+                `<div class="jm-output"></div>`}
             </div>
         `;
 
@@ -101,7 +106,9 @@ export class JsonMiller {
 
         this.breadcrumbsContainer = this.wrapper.querySelector('.jm-breadcrumbs');
         this.editorContainer = this.wrapper.querySelector('.jm-editor');
-        this.outputContainer = this.wrapper.querySelector('.jm-output');
+        if (!this.disableOutput) {
+            this.outputContainer = this.wrapper.querySelector('.jm-output');
+        }
 
         this.themeBtn = this.header.querySelector('.jm-theme-btn');
         this.lockBtn = this.header.querySelector('.jm-lock-btn');
@@ -369,10 +376,12 @@ export class JsonMiller {
         this.editorContainer.innerHTML = '';
 
         // Update Output JSON
-        if (this.isJsonEditMode) {
-            this.renderJsonTextArea();
-        } else {
-            this.renderJsonHtml();
+        if (!this.disableOutput) {
+            if (this.isJsonEditMode) {
+                this.renderJsonTextArea();
+            } else {
+                this.renderJsonHtml();
+            }
         }
 
         // Render Breadcrumbs
@@ -422,6 +431,10 @@ export class JsonMiller {
 
         // Focus and select all? Maybe just focus.
         textarea.focus();
+    }
+
+    clearOutputArea() {
+        this.outputContainer.innerHTML = '';
     }
 
     renderJsonHtml() {
