@@ -4,7 +4,7 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import styles from './style.css';
-import { arrowIcon, copyIcon, darkThemeIcon, editIcon, filledLockIcon, lightThemeIcon, lockIcon, saveIcon, tickIcon, trashIcon, unlockIcon } from './svg';
+import { arrowIcon, copyIcon, darkThemeIcon, editIcon, filledLockIcon, lightThemeIcon, lockIcon, saveIcon, tickIcon, trashIcon, unlockIcon, visibilityIcon, visibilityOffIcon } from './svg';
 
 export class JsonMiller {
     constructor(container, config = {}) {
@@ -21,7 +21,9 @@ export class JsonMiller {
         this.showLockBtn = config.showLockBtn === true;
         this.disableOutput = config.disableOutput === true;
         this.showEditBtn = config.showJsonEditBtn === true;
+        this.showOutputToggleBtn = config.showOutputToggleBtn === true;
 
+        this.isOutputVisible = !this.disableOutput && config.defaultOutputVisible !== false;
         this.isJsonEditMode = false;
         this.isLocked = false;
         this.selectionPath = [];
@@ -78,6 +80,9 @@ export class JsonMiller {
                 <button class="jm-copy-btn" title="Copy JSON">
                     ${copyIcon}
                 </button>
+                ${this.showOutputToggleBtn && !this.disableOutput ? `<button class="jm-output-toggle-btn" title="Toggle Output">
+                    ${visibilityIcon}
+                </button>` : ''}
             </div>
         `;
 
@@ -114,12 +119,14 @@ export class JsonMiller {
         this.lockBtn = this.header.querySelector('.jm-lock-btn');
         this.copyBtn = this.header.querySelector('.jm-copy-btn');
         this.jsonEditBtn = this.header.querySelector('.jm-json-edit-btn');
+        this.outputToggleBtn = this.header.querySelector('.jm-output-toggle-btn');
 
         // Bind events
         this.themeBtn.onclick = () => this.toggleTheme();
         if (this.lockBtn) this.lockBtn.onclick = () => this.toggleLock();
         this.copyBtn.onclick = () => this.copyJson();
         if (this.jsonEditBtn) this.jsonEditBtn.onclick = () => this.toggleJsonEditMode();
+        if (this.outputToggleBtn) this.outputToggleBtn.onclick = () => this.toggleOutput();
     }
 
     get ajv() {
@@ -237,6 +244,22 @@ export class JsonMiller {
             this.jsonEditBtn.title = "Save JSON";
             this.render();
         }
+    }
+
+    toggleOutput() {
+        if (!this.outputContainer) return;
+
+        this.isOutputVisible = !this.isOutputVisible;
+        if (this.isOutputVisible) {
+            this.outputContainer.classList.remove('collapsed');
+            this.outputToggleBtn.innerHTML = visibilityIcon;
+            this.outputToggleBtn.title = "Hide Output";
+        } else {
+            this.outputContainer.classList.add('collapsed');
+            this.outputToggleBtn.innerHTML = visibilityOffIcon;
+            this.outputToggleBtn.title = "Show Output";
+        }
+        this.render();
     }
 
     // --- Data Helpers ---
@@ -376,7 +399,7 @@ export class JsonMiller {
         this.editorContainer.innerHTML = '';
 
         // Update Output JSON
-        if (!this.disableOutput) {
+        if (!this.disableOutput && this.isOutputVisible) {
             if (this.isJsonEditMode) {
                 this.renderJsonTextArea();
             } else {
