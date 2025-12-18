@@ -307,6 +307,7 @@ export class JsonMiller {
     getDefaultValue(schema) {
         if (!schema) return "";
         if (schema.default !== undefined) return schema.default;
+        if (schema.enum && schema.enum.length > 0) return schema.enum[0];
 
         const type = Array.isArray(schema.type) ? schema.type[0] : schema.type;
 
@@ -405,6 +406,8 @@ export class JsonMiller {
             } else {
                 this.renderJsonHtml();
             }
+        } else if (!this.isOutputVisible) {
+            this.clearOutputArea();
         }
 
         // Render Breadcrumbs

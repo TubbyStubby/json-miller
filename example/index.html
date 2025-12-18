@@ -66,9 +66,14 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "status": {
+                    "type": "string",
+                    "enum": ["active", "inactive", "pending"],
+                    "default": "active"
                 }
             },
-            "required": ["name", "age"]
+            "required": ["name", "age", "status"]
         };
 
         const initialData = {
@@ -80,7 +85,8 @@
                 "state": "NY",
                 "postalCode": "10001"
             },
-            "hobbies": ["reading", "running"]
+            "hobbies": ["reading", "running"],
+            "status": "active"
         };
     </script>
 </body>

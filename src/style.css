@@ -343,6 +343,11 @@
     border-bottom: 1px solid var(--accent);
 }
 
+.json-miller-container option {
+    background-color: var(--col-bg);
+    color: var(--text);
+}
+
 /* Highlight label on focus */
 .json-miller-container .row:focus-within .key-label {
     color: var(--accent);
