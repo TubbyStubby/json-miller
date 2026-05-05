@@ -374,6 +374,11 @@ export class JsonMiller {
                 continue;
             }
 
+            if (currentSchema.additionalProperties && typeof currentSchema.additionalProperties === 'object') {
+                currentSchema = currentSchema.additionalProperties;
+                continue;
+            }
+
             return null;
         }
         return currentSchema;
@@ -852,53 +857,85 @@ export class JsonMiller {
 
         if (!this.isLocked && !Array.isArray(dataContext) && typeof dataContext === 'object') {
             const schema = this.getSchemaForPath(path);
+            let missingKeys = [];
+
             if (schema && schema.properties) {
                 const allKeys = Object.keys(schema.properties);
                 const currentKeys = Object.keys(dataContext);
-                const missingKeys = allKeys.filter(k => !currentKeys.includes(k));
+                missingKeys = allKeys.filter(k => !currentKeys.includes(k));
+            }
 
-                if (missingKeys.length > 0) {
-                    const addPropBtn = document.createElement('button');
-                    addPropBtn.innerText = "+ Property";
-                    addPropBtn.className = "add-property-btn";
+            const allowsAdditional = !schema || schema.additionalProperties !== false;
 
-                    addPropBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        const existingDropdown = col.querySelector('.property-dropdown');
-                        if (existingDropdown) {
-                            existingDropdown.remove();
-                            return;
+            if (missingKeys.length > 0 || allowsAdditional) {
+                const addPropBtn = document.createElement('button');
+                addPropBtn.innerText = "+ Property";
+                addPropBtn.className = "add-property-btn";
+
+                addPropBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const existingDropdown = col.querySelector('.property-dropdown');
+                    if (existingDropdown) {
+                        existingDropdown.remove();
+                        return;
+                    }
+
+                    const dropdown = document.createElement('div');
+                    dropdown.className = 'property-dropdown';
+                    dropdown.style.left = addPropBtn.offsetLeft + 'px';
+                    dropdown.style.top = (addPropBtn.offsetTop + addPropBtn.offsetHeight + 4) + 'px';
+
+                    missingKeys.forEach(key => {
+                        const item = document.createElement('div');
+                        item.className = 'property-dropdown-item';
+                        item.innerText = key;
+                        item.onclick = () => {
+                            const newPath = [...path, key];
+                            const propSchema = schema.properties[key];
+                            const defaultVal = this.getDefaultValue(propSchema);
+                            this.setValueAt(newPath, defaultVal);
+                        };
+                        dropdown.appendChild(item);
+                    });
+
+                    if (allowsAdditional) {
+                        if (missingKeys.length > 0) {
+                            const separator = document.createElement('div');
+                            separator.style.borderTop = "1px solid var(--border)";
+                            separator.style.margin = "4px 0";
+                            dropdown.appendChild(separator);
                         }
 
-                        const dropdown = document.createElement('div');
-                        dropdown.className = 'property-dropdown';
-                        dropdown.style.left = addPropBtn.offsetLeft + 'px';
-
-                        missingKeys.forEach(key => {
-                            const item = document.createElement('div');
-                            item.className = 'property-dropdown-item';
-                            item.innerText = key;
-                            item.onclick = () => {
-                                const newPath = [...path, key];
-                                const propSchema = schema.properties[key];
-                                const defaultVal = this.getDefaultValue(propSchema);
+                        const item = document.createElement('div');
+                        item.className = 'property-dropdown-item';
+                        item.innerText = "Custom Property...";
+                        item.style.fontStyle = "italic";
+                        item.onclick = () => {
+                            dropdown.remove();
+                            const propName = prompt("Enter new property name:");
+                            if (propName && !Object.keys(dataContext).includes(propName)) {
+                                const newPath = [...path, propName];
+                                let defaultVal = "";
+                                if (schema && schema.additionalProperties && typeof schema.additionalProperties === 'object') {
+                                    defaultVal = this.getDefaultValue(schema.additionalProperties);
+                                }
                                 this.setValueAt(newPath, defaultVal);
-                            };
-                            dropdown.appendChild(item);
-                        });
-
-                        col.appendChild(dropdown);
-
-                        const closeDropdown = (ev) => {
-                            if (!dropdown.contains(ev.target) && ev.target !== addPropBtn) {
-                                dropdown.remove();
-                                document.removeEventListener('click', closeDropdown);
                             }
                         };
-                        setTimeout(() => document.addEventListener('click', closeDropdown), 0);
+                        dropdown.appendChild(item);
+                    }
+
+                    col.appendChild(dropdown);
+
+                    const closeDropdown = (ev) => {
+                        if (!dropdown.contains(ev.target) && ev.target !== addPropBtn) {
+                            dropdown.remove();
+                            document.removeEventListener('click', closeDropdown);
+                        }
                     };
-                    col.appendChild(addPropBtn);
-                }
+                    setTimeout(() => document.addEventListener('click', closeDropdown), 0);
+                };
+                col.appendChild(addPropBtn);
             }
         }
 
