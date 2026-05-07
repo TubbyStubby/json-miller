@@ -674,21 +674,22 @@
     background-color: rgba(46, 160, 67, 0.1);
     border-left: 3px solid #2ea043;
 }
+
 .json-miller-container .row.diff-updated {
     background-color: rgba(137, 87, 229, 0.1);
     border-left: 3px solid #8957e5;
 }
+
 .json-miller-container .row.diff-removed {
     opacity: 0.6;
-    border-left: 3px solid #888;
-    background: repeating-linear-gradient(
-        45deg,
-        rgba(0,0,0,0.02),
-        rgba(0,0,0,0.02) 10px,
-        rgba(0,0,0,0.05) 10px,
-        rgba(0,0,0,0.05) 20px
-    );
+    border-left: 4px dotted #666;
+    background: repeating-linear-gradient(45deg,
+            rgba(0, 0, 0, 0.15),
+            rgba(0, 0, 0, 0.15) 10px,
+            rgba(0, 0, 0, 0.25) 10px,
+            rgba(0, 0, 0, 0.25) 20px);
 }
+
 .json-miller-container .row.diff-removed .property-label {
     text-decoration: line-through;
 }
@@ -697,40 +698,44 @@
 .json-miller-container.jm-dark .row.diff-added {
     background-color: rgba(46, 160, 67, 0.2);
 }
+
 .json-miller-container.jm-dark .row.diff-updated {
     background-color: rgba(137, 87, 229, 0.2);
 }
+
 .json-miller-container.jm-dark .row.diff-removed {
-    background: repeating-linear-gradient(
-        45deg,
-        rgba(255,255,255,0.02),
-        rgba(255,255,255,0.02) 10px,
-        rgba(255,255,255,0.05) 10px,
-        rgba(255,255,255,0.05) 20px
-    );
+    background: repeating-linear-gradient(45deg,
+            rgba(255, 255, 255, 0.2),
+            rgba(255, 255, 255, 0.2) 10px,
+            rgba(255, 255, 255, 0.3) 10px,
+            rgba(255, 255, 255, 0.3) 20px);
+    border-left: 4px dotted #999;
 }
 
 /* Change Tracking JSON Output */
-.json-line.diff-added { 
-    background-color: rgba(46, 160, 67, 0.1); 
-    display: inline-block; 
-    width: 100%; 
-}
-.json-line.diff-updated { 
-    background-color: rgba(137, 87, 229, 0.1); 
-    display: inline-block; 
-    width: 100%; 
-}
-.json-line.diff-removed { 
-    opacity: 0.6; 
-    text-decoration: line-through; 
-    display: inline-block; 
-    width: 100%; 
+.json-line.diff-added {
+    background-color: rgba(46, 160, 67, 0.1);
+    display: inline-block;
+    width: 100%;
 }
 
-.json-miller-container.jm-dark .json-line.diff-added { 
-    background-color: rgba(46, 160, 67, 0.2); 
+.json-line.diff-updated {
+    background-color: rgba(137, 87, 229, 0.1);
+    display: inline-block;
+    width: 100%;
 }
-.json-miller-container.jm-dark .json-line.diff-updated { 
-    background-color: rgba(137, 87, 229, 0.2); 
+
+.json-line.diff-removed {
+    opacity: 0.6;
+    text-decoration: line-through;
+    display: inline-block;
+    width: 100%;
+}
+
+.json-miller-container.jm-dark .json-line.diff-added {
+    background-color: rgba(46, 160, 67, 0.2);
+}
+
+.json-miller-container.jm-dark .json-line.diff-updated {
+    background-color: rgba(137, 87, 229, 0.2);
 }
