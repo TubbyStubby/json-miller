@@ -30,6 +30,12 @@ export class JsonMiller {
         this.isLocked = false;
         this.selectionPath = [];
         this.focusedPath = null;
+        
+        this.searchQuery = '';
+        this.searchResults = [];
+        this.searchIndex = -1;
+        this.activeSearchPath = null;
+        this.searchCaseSensitive = false;
 
         // Theme state
         this.isDark = config.defaultDark === true;
@@ -68,10 +74,21 @@ export class JsonMiller {
         this.header = document.createElement('header');
         this.header.innerHTML = `
             <h3>${this.title}</h3>
+            
+            <div class="jm-search-container">
+                <span class="jm-search-icon" style="font-size: 16px;">🔍</span>
+                <input type="text" class="jm-search-input" placeholder="Search keys and values..." />
+                <span class="jm-search-counter" style="font-size: 12px; margin-right: 8px; opacity: 0.6; display: none;"></span>
+                <button class="jm-search-case-btn" title="Match Case" style="font-family: monospace; font-weight: bold; font-size: 14px;">Aa</button>
+                <div class="jm-search-nav">
+                    <button class="jm-search-prev-btn" title="Previous Match" style="font-size: 16px;">↑</button>
+                    <button class="jm-search-next-btn" title="Next Match" style="font-size: 16px;">↓</button>
+                </div>
+            </div>
+
             <div style="display: flex; gap: 10px;">
                 <button class="jm-theme-btn" title="Toggle Theme">
                     ${lightThemeIcon}
-                </button>
                 </button>
                 ${this.showLockBtn ? `<button class="jm-lock-btn" title="Lock/Unlock">
                     ${lockIcon}
@@ -123,7 +140,31 @@ export class JsonMiller {
         this.jsonEditBtn = this.header.querySelector('.jm-json-edit-btn');
         this.outputToggleBtn = this.header.querySelector('.jm-output-toggle-btn');
 
+        this.searchInput = this.header.querySelector('.jm-search-input');
+        this.searchCaseBtn = this.header.querySelector('.jm-search-case-btn');
+        this.searchPrevBtn = this.header.querySelector('.jm-search-prev-btn');
+        this.searchNextBtn = this.header.querySelector('.jm-search-next-btn');
+        this.searchCounter = this.header.querySelector('.jm-search-counter');
+
         // Bind events
+        this.searchInput.addEventListener('input', (e) => {
+            this._executeSearch(e.target.value);
+        });
+        this.searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (e.shiftKey) this._prevSearchResult();
+                else this._nextSearchResult();
+            }
+        });
+        this.searchCaseBtn.onclick = () => {
+            this.searchCaseSensitive = !this.searchCaseSensitive;
+            if (this.searchCaseSensitive) this.searchCaseBtn.classList.add('active');
+            else this.searchCaseBtn.classList.remove('active');
+            this._executeSearch(this.searchInput.value);
+        };
+        this.searchPrevBtn.onclick = () => this._prevSearchResult();
+        this.searchNextBtn.onclick = () => this._nextSearchResult();
+
         this.themeBtn.onclick = () => this.toggleTheme();
         if (this.lockBtn) this.lockBtn.onclick = () => this.toggleLock();
         this.copyBtn.onclick = () => this.copyJson();
@@ -156,6 +197,75 @@ export class JsonMiller {
 
     getOriginalValueAt(path) {
         return path.reduce((acc, key) => (acc && acc[key] !== undefined) ? acc[key] : undefined, this.originalData);
+    }
+
+    _executeSearch(query) {
+        this.searchQuery = query;
+        this.searchResults = [];
+        this.searchIndex = -1;
+        this.activeSearchPath = null;
+        
+        if (!query) {
+            this.render({ preserveScroll: true });
+            return;
+        }
+        
+        const q = this.searchCaseSensitive ? query : query.toLowerCase();
+        
+        const searchNode = (node, path) => {
+            if (node && typeof node === 'object') {
+                Object.keys(node).forEach(key => {
+                    const childPath = [...path, Array.isArray(node) ? Number(key) : key];
+                    const k = this.searchCaseSensitive ? String(key) : String(key).toLowerCase();
+                    
+                    if (k.includes(q)) {
+                        this.searchResults.push({ path: childPath, isKey: true });
+                    }
+                    
+                    searchNode(node[key], childPath);
+                });
+            } else if (node !== undefined && node !== null) {
+                const v = this.searchCaseSensitive ? String(node) : String(node).toLowerCase();
+                if (v.includes(q)) {
+                    this.searchResults.push({ path, isKey: false });
+                }
+            }
+        };
+        
+        searchNode(this.data, []);
+        
+        if (this.searchResults.length > 0) {
+            this.searchIndex = 0;
+            this._jumpToSearchIndex();
+        } else {
+            this.searchCounter.style.display = 'none';
+            this.render({ preserveScroll: true });
+        }
+    }
+
+    _jumpToSearchIndex() {
+        if (this.searchIndex < 0 || this.searchIndex >= this.searchResults.length) return;
+        
+        this.searchCounter.style.display = 'inline';
+        this.searchCounter.innerText = `${this.searchIndex + 1} / ${this.searchResults.length}`;
+
+        const result = this.searchResults[this.searchIndex];
+        this.activeSearchPath = result.path;
+        this.selectionPath = result.path.slice(0, -1);
+        this.focusedPath = null;
+        this.render();
+    }
+    
+    _nextSearchResult() {
+        if (this.searchResults.length === 0) return;
+        this.searchIndex = (this.searchIndex + 1) % this.searchResults.length;
+        this._jumpToSearchIndex();
+    }
+    
+    _prevSearchResult() {
+        if (this.searchResults.length === 0) return;
+        this.searchIndex = (this.searchIndex - 1 + this.searchResults.length) % this.searchResults.length;
+        this._jumpToSearchIndex();
     }
 
     isEqual(v1, v2) {
@@ -803,6 +913,13 @@ export class JsonMiller {
             const row = document.createElement('div');
             row.className = 'row';
             row.setAttribute('data-path', JSON.stringify(fullPath));
+
+            if (this.activeSearchPath && JSON.stringify(fullPath) === JSON.stringify(this.activeSearchPath)) {
+                row.classList.add('search-highlight');
+                setTimeout(() => {
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 10);
+            }
 
             if (diffState === 'added') row.classList.add('diff-added');
             if (diffState === 'removed') row.classList.add('diff-removed');

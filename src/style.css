@@ -69,7 +69,6 @@
 .json-miller-container header button {
     background: transparent;
     color: var(--text);
-    border: 1px solid var(--border);
     width: 36px;
     height: 36px;
     padding: 0;
@@ -738,4 +737,95 @@
 
 .json-miller-container.jm-dark .json-line.diff-updated {
     background-color: rgba(137, 87, 229, 0.2);
+}
+
+/* Search UI */
+.jm-search-container {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    padding: 2px 6px;
+    margin-left: 20px;
+    flex: 1;
+    max-width: 400px;
+}
+
+.json-miller-container.jm-dark .jm-search-container {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.jm-search-icon {
+    display: flex;
+    align-items: center;
+    opacity: 0.5;
+    margin-right: 6px;
+}
+
+.jm-search-input {
+    border: none;
+    background: transparent;
+    flex: 1;
+    padding: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    color: inherit;
+    outline: none;
+}
+
+.jm-search-case-btn,
+.jm-search-prev-btn,
+.jm-search-next-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: inherit;
+    opacity: 0.5;
+    transition: all 0.2s;
+}
+
+.jm-search-case-btn:hover,
+.jm-search-prev-btn:hover,
+.jm-search-next-btn:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.json-miller-container.jm-dark .jm-search-case-btn:hover,
+.json-miller-container.jm-dark .jm-search-prev-btn:hover,
+.json-miller-container.jm-dark .jm-search-next-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.jm-search-case-btn.active {
+    opacity: 1;
+    color: #007bff;
+    background: rgba(0, 123, 255, 0.1);
+}
+
+.jm-search-nav {
+    display: flex;
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
+    margin-left: 6px;
+    padding-left: 6px;
+}
+
+.json-miller-container.jm-dark .jm-search-nav {
+    border-left-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Search Highlight */
+.json-miller-container .row.search-highlight {
+    background-color: rgba(255, 255, 0, 0.2);
+    border-left: 3px solid #fbbc05;
+}
+
+.json-miller-container.jm-dark .row.search-highlight {
+    background-color: rgba(255, 255, 0, 0.15);
+    border-left: 3px solid #fbbc05;
 }
