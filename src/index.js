@@ -183,10 +183,30 @@ export class JsonMiller {
 
             if (current === undefined && original !== undefined) {
                 this.diffMap.set(pathStr, 'removed');
+                const markChildrenRemoved = (obj, p) => {
+                    if (obj && typeof obj === 'object') {
+                        Object.keys(obj).forEach(k => {
+                            const childP = [...p, Array.isArray(obj) ? Number(k) : k];
+                            this.diffMap.set(JSON.stringify(childP), 'removed');
+                            markChildrenRemoved(obj[k], childP);
+                        });
+                    }
+                };
+                markChildrenRemoved(original, path);
                 return true;
             }
             if (current !== undefined && original === undefined) {
                 this.diffMap.set(pathStr, 'added');
+                const markChildrenAdded = (obj, p) => {
+                    if (obj && typeof obj === 'object') {
+                        Object.keys(obj).forEach(k => {
+                            const childP = [...p, Array.isArray(obj) ? Number(k) : k];
+                            this.diffMap.set(JSON.stringify(childP), 'added');
+                            markChildrenAdded(obj[k], childP);
+                        });
+                    }
+                };
+                markChildrenAdded(current, path);
                 return true;
             }
             if (current === original) return false;
@@ -508,8 +528,11 @@ export class JsonMiller {
         for (const key of this.selectionPath) {
             currentPath.push(key);
             const value = this.getValueAt(currentPath);
+            const origValue = this.getOriginalValueAt(currentPath);
+            
+            const isComplex = (value && typeof value === 'object') || (origValue && typeof origValue === 'object');
 
-            if (value && typeof value === 'object') {
+            if (isComplex) {
                 this.renderColumn([...currentPath], value, validationErrors);
             } else {
                 break;
@@ -1021,7 +1044,8 @@ export class JsonMiller {
                 restoreBtn.onclick = (e) => {
                     e.stopPropagation();
                     if (this.isLocked) return;
-                    this.setValueAt(fullPath, JSON.parse(JSON.stringify(originalValue)));
+                    const origVal = this.getOriginalValueAt(fullPath);
+                    this.setValueAt(fullPath, JSON.parse(JSON.stringify(origVal)));
                 };
                 row.appendChild(restoreBtn);
             } else {
