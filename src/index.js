@@ -4,7 +4,7 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import styles from './style.css';
-import { arrowIcon, copyIcon, darkThemeIcon, editIcon, filledLockIcon, lightThemeIcon, lockIcon, saveIcon, tickIcon, trashIcon, unlockIcon, visibilityIcon, visibilityOffIcon } from './svg';
+import { arrowIcon, copyIcon, darkThemeIcon, editIcon, filledLockIcon, lightThemeIcon, lockIcon, saveIcon, tickIcon, trashIcon, unlockIcon, visibilityIcon, visibilityOffIcon, restoreIcon } from './svg';
 
 export class JsonMiller {
     constructor(container, config = {}) {
@@ -790,7 +790,7 @@ export class JsonMiller {
             }
 
             const initializeMissing = () => {
-                if (dataContext[key] === undefined && !this.isLocked) {
+                if (dataContext[key] === undefined && !this.isLocked && diffState !== 'removed') {
                     let defaultVal = "";
                     if (valueType === 'object') defaultVal = {};
                     else if (valueType === 'array') defaultVal = [];
@@ -1011,6 +1011,19 @@ export class JsonMiller {
                 lockIcon.className = 'lock-icon';
                 lockIcon.innerHTML = filledLockIcon;
                 row.appendChild(lockIcon);
+            } else if (diffState === 'removed') {
+                const restoreBtn = document.createElement('button');
+                restoreBtn.className = 'delete-btn'; 
+                restoreBtn.innerHTML = restoreIcon;
+                restoreBtn.title = 'Restore Original Value';
+                restoreBtn.disabled = this.isLocked;
+                
+                restoreBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (this.isLocked) return;
+                    this.setValueAt(fullPath, JSON.parse(JSON.stringify(originalValue)));
+                };
+                row.appendChild(restoreBtn);
             } else {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'delete-btn';

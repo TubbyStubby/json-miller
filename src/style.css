@@ -680,7 +680,14 @@
 }
 .json-miller-container .row.diff-removed {
     opacity: 0.6;
-    border-left: 3px dashed #888;
+    border-left: 3px solid #888;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(0,0,0,0.02),
+        rgba(0,0,0,0.02) 10px,
+        rgba(0,0,0,0.05) 10px,
+        rgba(0,0,0,0.05) 20px
+    );
 }
 .json-miller-container .row.diff-removed .property-label {
     text-decoration: line-through;
@@ -692,6 +699,15 @@
 }
 .json-miller-container.jm-dark .row.diff-updated {
     background-color: rgba(137, 87, 229, 0.2);
+}
+.json-miller-container.jm-dark .row.diff-removed {
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,0.02),
+        rgba(255,255,255,0.02) 10px,
+        rgba(255,255,255,0.05) 10px,
+        rgba(255,255,255,0.05) 20px
+    );
 }
 
 /* Change Tracking JSON Output */
