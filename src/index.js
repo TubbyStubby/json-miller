@@ -341,15 +341,23 @@ export class JsonMiller {
         const valid = this.validateFn(data);
         if (!valid) {
             this.validateFn.errors.forEach(err => {
-                const pathStr = err.instancePath;
-                if (pathStr) {
-                    const parts = pathStr.split('/').filter(p => p !== "");
-                    const pathArray = parts.map(p => {
-                        return isNaN(p) ? p : Number(p);
-                    });
-                    errors.add(JSON.stringify(pathArray));
-                } else {
-                    errors.add(JSON.stringify([]));
+                let parts = [];
+                if (err.instancePath) {
+                    parts = err.instancePath.split('/').filter(p => p !== "");
+                }
+                
+                // Add the missing property to the path so the child row gets highlighted
+                if (err.keyword === 'required' && err.params && err.params.missingProperty) {
+                    parts.push(err.params.missingProperty);
+                }
+
+                const pathArray = parts.map(p => isNaN(p) ? p : Number(p));
+                errors.add(JSON.stringify(pathArray));
+
+                // Also add parent error so parent row shows child-error
+                if (parts.length > 0 && err.keyword === 'required') {
+                    const parentPath = parts.slice(0, -1);
+                    errors.add(JSON.stringify(parentPath.map(p => isNaN(p) ? p : Number(p))));
                 }
             });
         }
@@ -600,44 +608,97 @@ export class JsonMiller {
         header.innerText = headerText;
         col.appendChild(header);
 
-        const keys = Object.keys(dataContext);
+        let keys = Object.keys(dataContext);
 
-        // Auto-add missing required fields if not locked
-        if (!this.isLocked && !Array.isArray(dataContext) && typeof dataContext === 'object') {
-            const schema = this.getSchemaForPath(path);
-            if (schema && schema.required) {
-                let added = false;
-                schema.required.forEach(reqKey => {
-                    if (!keys.includes(reqKey)) {
-                        // Calculate default value
-                        let defaultVal = "";
-                        if (schema.properties && schema.properties[reqKey]) {
-                            defaultVal = this.getDefaultValue(schema.properties[reqKey]);
-                        }
+        // Merge schema keys to ensure required/default fields are present
+        if (!Array.isArray(dataContext)) {
+            const currentSchema = this.getSchemaForPath(path);
+            if (currentSchema && currentSchema.properties) {
+                const schemaKeys = Object.keys(currentSchema.properties);
+                keys = [...new Set([...keys, ...schemaKeys])];
 
-                        // Set value in data (this doesn't trigger re-render if we are careful, 
-                        // but setValueAt does calls render. better modify object directly here)
-                        dataContext[reqKey] = defaultVal;
-                        keys.push(reqKey);
-                        added = true;
-                    }
+                // Sort keys to match schema order if possible
+                keys.sort((a, b) => {
+                    const idxA = schemaKeys.indexOf(a);
+                    const idxB = schemaKeys.indexOf(b);
+                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                    if (idxA !== -1) return -1;
+                    if (idxB !== -1) return 1;
+                    return 0;
                 });
             }
         }
 
+
         keys.forEach(key => {
             const fullPath = [...path, Array.isArray(dataContext) ? Number(key) : key];
-            const value = dataContext[key];
-            const valueType = this.getType(value);
+
+            // Auto-populate defaults for missing fields if provided in schema
+            if (dataContext[key] === undefined && !Array.isArray(dataContext)) {
+                const fieldSchema = this.getSchemaForPath(fullPath);
+                if (fieldSchema && fieldSchema.default !== undefined) {
+                    dataContext[key] = fieldSchema.default;
+                }
+            }
+            let value = dataContext[key];
+            let valueType = this.getType(value);
+
+            // Handle undefined/missing values
+            if (value === undefined) {
+                const fieldSchema = this.getSchemaForPath(fullPath);
+                const availableTypes = this.getAvailableTypes(fieldSchema);
+                // Guess type from allowed types
+                if (availableTypes && availableTypes.length > 0) {
+                    const firstType = availableTypes[0];
+                    // Only override if not 'undefined' (which getAvailableTypes returns if no schema)
+                    if (firstType !== 'undefined') {
+                        valueType = firstType;
+                        if (valueType === 'integer') valueType = 'number';
+                    } else {
+                        valueType = 'string';
+                    }
+                } else {
+                    valueType = 'string';
+                }
+            }
+
             const isComplex = valueType === 'object' || valueType === 'array';
 
-            const fieldSchema = this.getSchemaForPath(fullPath);
             const parentSchema = this.getSchemaForPath(path);
+            const fieldSchema = this.getSchemaForPath(fullPath); // Redundant call but safe
             const isRequired = !Array.isArray(dataContext) && this.isRequired(parentSchema, key);
 
             const row = document.createElement('div');
             row.className = 'row';
             row.setAttribute('data-path', JSON.stringify(fullPath));
+
+            if (dataContext[key] === undefined) {
+                row.classList.add('is-missing');
+            }
+
+            const initializeMissing = () => {
+                if (dataContext[key] === undefined && !this.isLocked) {
+                    let defaultVal = "";
+                    if (valueType === 'object') defaultVal = {};
+                    else if (valueType === 'array') defaultVal = [];
+                    else if (valueType === 'number') defaultVal = 0;
+                    else if (valueType === 'boolean') defaultVal = false;
+                    else if (valueType === 'null') defaultVal = null;
+                    
+                    dataContext[key] = defaultVal;
+                    row.classList.remove('is-missing');
+                    
+                    if (!this.disableOutput && this.isOutputVisible) {
+                        if (this.isJsonEditMode) {
+                            this.renderJsonTextArea();
+                        } else {
+                            this.renderJsonHtml();
+                        }
+                    }
+                }
+            };
+            row.addEventListener('mousedown', initializeMissing, true);
+            row.addEventListener('focusin', initializeMissing, true);
 
             const pathStr = JSON.stringify(fullPath);
             if (validationErrors.has(pathStr)) {
@@ -740,7 +801,7 @@ export class JsonMiller {
                 if (valueType === 'boolean') {
                     const cb = document.createElement('input');
                     cb.type = 'checkbox';
-                    cb.checked = value;
+                    cb.checked = value === undefined ? false : value;
                     cb.disabled = this.isLocked;
                     cb.onchange = (e) => this.setValueAt(fullPath, e.target.checked);
                     cb.style.width = "20px";
@@ -749,6 +810,17 @@ export class JsonMiller {
                 } else if (fieldSchema && fieldSchema.enum) {
                     const sel = document.createElement('select');
                     sel.disabled = this.isLocked;
+                    
+                    if (value === undefined) {
+                        const opt = document.createElement('option');
+                        opt.value = "";
+                        opt.innerText = "-- Select --";
+                        opt.disabled = true;
+                        opt.selected = true;
+                        opt.hidden = true;
+                        sel.appendChild(opt);
+                    }
+                    
                     fieldSchema.enum.forEach(optVal => {
                         const opt = document.createElement('option');
                         opt.value = optVal;
@@ -765,12 +837,12 @@ export class JsonMiller {
                     nullTxt.style.fontStyle = "italic";
                     inputWrapper.appendChild(nullTxt);
                 } else {
-                    const isLongText = valueType === 'string' && String(value).length > 60;
+                    const isLongText = valueType === 'string' && String(value || "").length > 60;
 
                     let input;
                     if (isLongText) {
                         input = document.createElement('textarea');
-                        input.value = value;
+                        input.value = value === undefined ? "" : value;
                         input.rows = 3;
                         input.disabled = this.isLocked;
                         input.oninput = (e) => {
@@ -783,7 +855,7 @@ export class JsonMiller {
                     } else {
                         input = document.createElement('input');
                         input.type = valueType === 'number' ? 'number' : 'text';
-                        input.value = value;
+                        input.value = value === undefined ? "" : value;
                         input.disabled = this.isLocked;
 
                         input.onchange = (e) => {
@@ -857,84 +929,25 @@ export class JsonMiller {
 
         if (!this.isLocked && !Array.isArray(dataContext) && typeof dataContext === 'object') {
             const schema = this.getSchemaForPath(path);
-            let missingKeys = [];
-
-            if (schema && schema.properties) {
-                const allKeys = Object.keys(schema.properties);
-                const currentKeys = Object.keys(dataContext);
-                missingKeys = allKeys.filter(k => !currentKeys.includes(k));
-            }
-
+            
             const allowsAdditional = !schema || schema.additionalProperties !== false;
 
-            if (missingKeys.length > 0 || allowsAdditional) {
+            if (allowsAdditional) {
                 const addPropBtn = document.createElement('button');
-                addPropBtn.innerText = "+ Property";
+                addPropBtn.innerText = "+ Custom Property";
                 addPropBtn.className = "add-property-btn";
 
                 addPropBtn.onclick = (e) => {
                     e.stopPropagation();
-                    const existingDropdown = col.querySelector('.property-dropdown');
-                    if (existingDropdown) {
-                        existingDropdown.remove();
-                        return;
-                    }
-
-                    const dropdown = document.createElement('div');
-                    dropdown.className = 'property-dropdown';
-                    dropdown.style.left = addPropBtn.offsetLeft + 'px';
-                    dropdown.style.top = (addPropBtn.offsetTop + addPropBtn.offsetHeight + 4) + 'px';
-                    dropdown.style.width = addPropBtn.offsetWidth + 'px';
-
-                    missingKeys.forEach(key => {
-                        const item = document.createElement('div');
-                        item.className = 'property-dropdown-item';
-                        item.innerText = key;
-                        item.onclick = () => {
-                            const newPath = [...path, key];
-                            const propSchema = schema.properties[key];
-                            const defaultVal = this.getDefaultValue(propSchema);
-                            this.setValueAt(newPath, defaultVal);
-                        };
-                        dropdown.appendChild(item);
-                    });
-
-                    if (allowsAdditional) {
-                        if (missingKeys.length > 0) {
-                            const separator = document.createElement('div');
-                            separator.style.borderTop = "1px solid var(--border)";
-                            separator.style.margin = "4px 0";
-                            dropdown.appendChild(separator);
+                    const propName = prompt("Enter new custom property name:");
+                    if (propName && !Object.keys(dataContext).includes(propName)) {
+                        const newPath = [...path, propName];
+                        let defaultVal = "";
+                        if (schema && schema.additionalProperties && typeof schema.additionalProperties === 'object') {
+                            defaultVal = this.getDefaultValue(schema.additionalProperties);
                         }
-
-                        const item = document.createElement('div');
-                        item.className = 'property-dropdown-item';
-                        item.innerText = "Custom Property...";
-                        item.style.fontStyle = "italic";
-                        item.onclick = () => {
-                            dropdown.remove();
-                            const propName = prompt("Enter new property name:");
-                            if (propName && !Object.keys(dataContext).includes(propName)) {
-                                const newPath = [...path, propName];
-                                let defaultVal = "";
-                                if (schema && schema.additionalProperties && typeof schema.additionalProperties === 'object') {
-                                    defaultVal = this.getDefaultValue(schema.additionalProperties);
-                                }
-                                this.setValueAt(newPath, defaultVal);
-                            }
-                        };
-                        dropdown.appendChild(item);
+                        this.setValueAt(newPath, defaultVal);
                     }
-
-                    col.appendChild(dropdown);
-
-                    const closeDropdown = (ev) => {
-                        if (!dropdown.contains(ev.target) && ev.target !== addPropBtn) {
-                            dropdown.remove();
-                            document.removeEventListener('click', closeDropdown);
-                        }
-                    };
-                    setTimeout(() => document.addEventListener('click', closeDropdown), 0);
                 };
                 col.appendChild(addPropBtn);
             }

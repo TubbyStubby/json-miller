@@ -44,8 +44,7 @@
                 },
                 "status": {
                     "type": "string",
-                    "enum": ["active", "inactive", "pending"],
-                    "default": "active"
+                    "enum": ["active", "inactive", "pending"]
                 },
                 "address": {
                     "type": "object",
@@ -69,7 +68,8 @@
                 "hobbies": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "string",
+                        "enum": ["reading", "running", "swimming", "cycling"]
                     }
                 }
             },
@@ -84,9 +84,7 @@
                 "city": "New York",
                 "state": "NY",
                 "postalCode": "10001"
-            },
-            "hobbies": ["reading", "running"],
-            "status": "active"
+            }
         };
     </script>
 </body>

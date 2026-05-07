@@ -658,3 +658,13 @@
     z-index: 10;
     pointer-events: none;
 }
+
+/* Missing values */
+.json-miller-container .row.is-missing {
+    opacity: 0.5;
+}
+
+.json-miller-container .row.is-missing:hover,
+.json-miller-container .row.is-missing:focus-within {
+    opacity: 1;
+}
