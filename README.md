@@ -71,3 +71,13 @@ To run the project locally:
    ```bash
    npm run dev
    ```
+
+## Next Steps (Scaling for Massive JSONs)
+
+To better support extremely large JSON datasets, the following architectural improvements are planned:
+
+1. **Virtual Scrolling (Windowing):** Implement virtual scrolling for the columns to only render DOM elements for rows that are currently visible within the viewport, drastically reducing DOM bloat.
+2. **State Proxies / Immutability:** Replace the synchronous deep-diffing algorithm (`_computeDiffs`) with state proxies or immutable state (e.g., Immer) to precisely track changes without full tree traversal on every keystroke.
+3. **Asynchronous Validation:** Move full AJV schema validation into a Web Worker or debounce it to prevent the UI from freezing when validating large structures.
+4. **Virtualized Output View:** Disable the default HTML string generation for the Output pane on massive files, or replace it with a virtualized code editor (like Monaco Editor or CodeMirror 6).
+5. **Asynchronous Search:** Offload tree search traversal to a Web Worker to keep the main thread responsive during search queries.
