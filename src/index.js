@@ -17,6 +17,8 @@ export class JsonMiller {
 
         this.title = config.title || "Miller Column JSON Editor";
         this.data = config.data || {};
+        this.originalData = JSON.parse(JSON.stringify(this.data));
+        this._computeDiffs();
         this.rootSchema = config.schema || {};
         this.showLockBtn = config.showLockBtn === true;
         this.disableOutput = config.disableOutput === true;
@@ -145,9 +147,75 @@ export class JsonMiller {
 
     setData(data) {
         this.data = data;
+        this.originalData = JSON.parse(JSON.stringify(this.data));
+        this._computeDiffs();
         // Reset selection
         this.selectionPath = [];
         this.render();
+    }
+
+    getOriginalValueAt(path) {
+        return path.reduce((acc, key) => (acc && acc[key] !== undefined) ? acc[key] : undefined, this.originalData);
+    }
+
+    isEqual(v1, v2) {
+        if (v1 === v2) return true;
+        if (v1 == null || v2 == null) return false;
+        if (typeof v1 !== 'object' || typeof v2 !== 'object') return false;
+
+        const keys1 = Object.keys(v1);
+        const keys2 = Object.keys(v2);
+
+        if (keys1.length !== keys2.length) return false;
+
+        for (let key of keys1) {
+            if (!this.isEqual(v1[key], v2[key])) return false;
+        }
+
+        return true;
+    }
+
+    _computeDiffs() {
+        this.diffMap = new Map();
+
+        const compare = (current, original, path) => {
+            const pathStr = JSON.stringify(path);
+
+            if (current === undefined && original !== undefined) {
+                this.diffMap.set(pathStr, 'removed');
+                return true;
+            }
+            if (current !== undefined && original === undefined) {
+                this.diffMap.set(pathStr, 'added');
+                return true;
+            }
+            if (current === original) return false;
+
+            if (current == null || original == null || typeof current !== 'object' || typeof original !== 'object') {
+                if (!this.isEqual(current, original)) {
+                    this.diffMap.set(pathStr, 'updated');
+                    return true;
+                }
+                return false;
+            }
+
+            let hasDiff = false;
+            const keys = new Set([...Object.keys(current), ...Object.keys(original)]);
+
+            for (let key of keys) {
+                const childPath = [...path, Array.isArray(current) && Array.isArray(original) ? Number(key) : key];
+                const childDiff = compare(current[key], original[key], childPath);
+                if (childDiff) hasDiff = true;
+            }
+
+            if (hasDiff) {
+                this.diffMap.set(pathStr, 'updated');
+            }
+
+            return hasDiff;
+        };
+
+        compare(this.data, this.originalData, []);
     }
 
     setSchema(schema) {
@@ -279,6 +347,7 @@ export class JsonMiller {
             const parent = this.getValueAt(parentPath);
             parent[lastKey] = value;
         }
+        this._computeDiffs();
         this.render({ preserveScroll: true });
     }
 
@@ -301,6 +370,7 @@ export class JsonMiller {
         } else {
             delete parent[lastKey];
         }
+        this._computeDiffs();
         this.render({ preserveScroll: true });
     }
 
@@ -345,7 +415,7 @@ export class JsonMiller {
                 if (err.instancePath) {
                     parts = err.instancePath.split('/').filter(p => p !== "");
                 }
-                
+
                 // Add the missing property to the path so the child row gets highlighted
                 if (err.keyword === 'required' && err.params && err.params.missingProperty) {
                     parts.push(err.params.missingProperty);
@@ -485,11 +555,24 @@ export class JsonMiller {
         if (typeof data === 'string') return `<span class="json-value type-string">"${data}"</span>`;
         if (typeof data === 'number') return `<span class="json-value type-number">${data}</span>`;
         if (typeof data === 'boolean') return `<span class="json-value type-boolean">${data}</span>`;
+        if (data === undefined) return '';
 
         const isArray = Array.isArray(data);
         const openChar = isArray ? '[' : '{';
         const closeChar = isArray ? ']' : '}';
-        const keys = Object.keys(data);
+
+        let keys = Object.keys(data || {});
+        const originalData = this.getOriginalValueAt(path);
+
+        if (originalData && typeof originalData === 'object') {
+            if (isArray && Array.isArray(originalData)) {
+                const maxLen = Math.max((data || []).length, originalData.length);
+                keys = Array.from({ length: maxLen }, (_, i) => String(i));
+            } else if (!isArray && !Array.isArray(originalData)) {
+                const originalKeys = Object.keys(originalData);
+                keys = [...new Set([...keys, ...originalKeys])];
+            }
+        }
 
         if (keys.length === 0) return `${openChar}${closeChar}`;
 
@@ -497,14 +580,31 @@ export class JsonMiller {
         keys.forEach((key, index) => {
             const currentPath = [...path, isArray ? Number(key) : key];
             const pathStr = JSON.stringify(currentPath);
-            const value = data[key];
+            const value = data ? data[key] : undefined;
+            const originalValue = originalData ? originalData[key] : undefined;
+
+            const diffState = this.diffMap ? this.diffMap.get(pathStr) : undefined;
+
+            let diffClass = '';
+            if (diffState === 'added') diffClass = 'diff-added';
+            if (diffState === 'removed') diffClass = 'diff-removed';
+            if (diffState === 'updated') diffClass = 'diff-updated';
+
+            const renderValue = diffState === 'removed' ? originalValue : value;
+
             const isLast = index === keys.length - 1;
             const comma = isLast ? '' : ',';
             const indent = '  '.repeat(path.length + 1);
             const keyHtml = isArray ? '' : `<span class="json-key">"${key}"</span>: `;
-            const valueHtml = this.generateJsonHtml(value, currentPath);
 
-            html += `<div class="json-line" data-path='${pathStr}'>${indent}${keyHtml}${valueHtml}${comma}</div>`;
+            let valueHtml = '';
+            if (renderValue === null) valueHtml = `<span class="json-value type-null">null</span>`;
+            else if (typeof renderValue === 'string') valueHtml = `<span class="json-value type-string">"${renderValue}"</span>`;
+            else if (typeof renderValue === 'number') valueHtml = `<span class="json-value type-number">${renderValue}</span>`;
+            else if (typeof renderValue === 'boolean') valueHtml = `<span class="json-value type-boolean">${renderValue}</span>`;
+            else valueHtml = this.generateJsonHtml(renderValue, currentPath);
+
+            html += `<div class="json-line ${diffClass}" data-path='${pathStr}'>${indent}${keyHtml}${valueHtml}${comma}</div>`;
         });
         html += `${'  '.repeat(path.length)}${closeChar}`;
         return html;
@@ -608,25 +708,32 @@ export class JsonMiller {
         header.innerText = headerText;
         col.appendChild(header);
 
-        let keys = Object.keys(dataContext);
+        let keys = Object.keys(dataContext || {});
+        const originalDataContext = this.getOriginalValueAt(path);
 
-        // Merge schema keys to ensure required/default fields are present
-        if (!Array.isArray(dataContext)) {
+        if (Array.isArray(dataContext) && Array.isArray(originalDataContext)) {
+            const maxLen = Math.max(dataContext.length, originalDataContext.length);
+            keys = Array.from({ length: maxLen }, (_, i) => String(i));
+        } else if (!Array.isArray(dataContext)) {
+            let originalKeys = originalDataContext && typeof originalDataContext === 'object' && !Array.isArray(originalDataContext) ? Object.keys(originalDataContext) : [];
             const currentSchema = this.getSchemaForPath(path);
-            if (currentSchema && currentSchema.properties) {
-                const schemaKeys = Object.keys(currentSchema.properties);
-                keys = [...new Set([...keys, ...schemaKeys])];
+            let schemaKeys = [];
 
-                // Sort keys to match schema order if possible
-                keys.sort((a, b) => {
-                    const idxA = schemaKeys.indexOf(a);
-                    const idxB = schemaKeys.indexOf(b);
-                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-                    if (idxA !== -1) return -1;
-                    if (idxB !== -1) return 1;
-                    return 0;
-                });
+            if (currentSchema && currentSchema.properties) {
+                schemaKeys = Object.keys(currentSchema.properties);
             }
+
+            keys = [...new Set([...keys, ...originalKeys, ...schemaKeys])];
+
+            // Sort keys to match schema order if possible
+            keys.sort((a, b) => {
+                const idxA = schemaKeys.indexOf(a);
+                const idxB = schemaKeys.indexOf(b);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                return 0;
+            });
         }
 
 
@@ -668,9 +775,15 @@ export class JsonMiller {
             const fieldSchema = this.getSchemaForPath(fullPath); // Redundant call but safe
             const isRequired = !Array.isArray(dataContext) && this.isRequired(parentSchema, key);
 
+            const diffState = this.diffMap ? this.diffMap.get(JSON.stringify(fullPath)) : undefined;
+
             const row = document.createElement('div');
             row.className = 'row';
             row.setAttribute('data-path', JSON.stringify(fullPath));
+
+            if (diffState === 'added') row.classList.add('diff-added');
+            if (diffState === 'removed') row.classList.add('diff-removed');
+            if (diffState === 'updated') row.classList.add('diff-updated');
 
             if (dataContext[key] === undefined) {
                 row.classList.add('is-missing');
@@ -684,10 +797,10 @@ export class JsonMiller {
                     else if (valueType === 'number') defaultVal = 0;
                     else if (valueType === 'boolean') defaultVal = false;
                     else if (valueType === 'null') defaultVal = null;
-                    
+
                     dataContext[key] = defaultVal;
                     row.classList.remove('is-missing');
-                    
+
                     if (!this.disableOutput && this.isOutputVisible) {
                         if (this.isJsonEditMode) {
                             this.renderJsonTextArea();
@@ -810,7 +923,7 @@ export class JsonMiller {
                 } else if (fieldSchema && fieldSchema.enum) {
                     const sel = document.createElement('select');
                     sel.disabled = this.isLocked;
-                    
+
                     if (value === undefined) {
                         const opt = document.createElement('option');
                         opt.value = "";
@@ -820,7 +933,7 @@ export class JsonMiller {
                         opt.hidden = true;
                         sel.appendChild(opt);
                     }
-                    
+
                     fieldSchema.enum.forEach(optVal => {
                         const opt = document.createElement('option');
                         opt.value = optVal;
@@ -929,7 +1042,7 @@ export class JsonMiller {
 
         if (!this.isLocked && !Array.isArray(dataContext) && typeof dataContext === 'object') {
             const schema = this.getSchemaForPath(path);
-            
+
             const allowsAdditional = !schema || schema.additionalProperties !== false;
 
             if (allowsAdditional) {

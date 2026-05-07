@@ -668,3 +668,53 @@
 .json-miller-container .row.is-missing:focus-within {
     opacity: 1;
 }
+
+/* Change Tracking (Diffs) - Light Mode */
+.json-miller-container .row.diff-added {
+    background-color: rgba(46, 160, 67, 0.1);
+    border-left: 3px solid #2ea043;
+}
+.json-miller-container .row.diff-updated {
+    background-color: rgba(137, 87, 229, 0.1);
+    border-left: 3px solid #8957e5;
+}
+.json-miller-container .row.diff-removed {
+    opacity: 0.6;
+    border-left: 3px dashed #888;
+}
+.json-miller-container .row.diff-removed .property-label {
+    text-decoration: line-through;
+}
+
+/* Change Tracking (Diffs) - Dark Mode */
+.json-miller-container.jm-dark .row.diff-added {
+    background-color: rgba(46, 160, 67, 0.2);
+}
+.json-miller-container.jm-dark .row.diff-updated {
+    background-color: rgba(137, 87, 229, 0.2);
+}
+
+/* Change Tracking JSON Output */
+.json-line.diff-added { 
+    background-color: rgba(46, 160, 67, 0.1); 
+    display: inline-block; 
+    width: 100%; 
+}
+.json-line.diff-updated { 
+    background-color: rgba(137, 87, 229, 0.1); 
+    display: inline-block; 
+    width: 100%; 
+}
+.json-line.diff-removed { 
+    opacity: 0.6; 
+    text-decoration: line-through; 
+    display: inline-block; 
+    width: 100%; 
+}
+
+.json-miller-container.jm-dark .json-line.diff-added { 
+    background-color: rgba(46, 160, 67, 0.2); 
+}
+.json-miller-container.jm-dark .json-line.diff-updated { 
+    background-color: rgba(137, 87, 229, 0.2); 
+}
