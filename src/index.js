@@ -1244,11 +1244,30 @@ export class JsonMiller {
                 this.render();
             };
 
+            const canRestore = !this.isLocked && (diffState === 'updated' || diffState === 'added');
+
             if (isRequired) {
-                const lockIcon = document.createElement('span');
-                lockIcon.className = 'lock-icon';
-                lockIcon.innerHTML = filledLockIcon;
-                row.appendChild(lockIcon);
+                // For required fields: show restore above the lock icon if field was changed
+                const reqGroup = document.createElement('div');
+                reqGroup.className = 'row-actions row-actions-required';
+                if (canRestore) {
+                    const restoreBtn = document.createElement('button');
+                    restoreBtn.className = 'row-action-btn restore-btn';
+                    restoreBtn.innerHTML = restoreIcon;
+                    restoreBtn.title = 'Restore Original Value';
+                    restoreBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (this.isLocked) return;
+                        const origVal = this.getOriginalValueAt(fullPath);
+                        this.setValueAt(fullPath, JSON.parse(JSON.stringify(origVal)));
+                    };
+                    reqGroup.appendChild(restoreBtn);
+                }
+                const lockIconEl = document.createElement('span');
+                lockIconEl.className = 'lock-icon';
+                lockIconEl.innerHTML = filledLockIcon;
+                reqGroup.appendChild(lockIconEl);
+                row.appendChild(reqGroup);
             } else if (diffState === 'removed') {
                 const restoreBtn = document.createElement('button');
                 restoreBtn.className = 'delete-btn';
@@ -1264,8 +1283,11 @@ export class JsonMiller {
                 };
                 row.appendChild(restoreBtn);
             } else {
+                const actionsGroup = document.createElement('div');
+                actionsGroup.className = 'row-actions';
+
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'delete-btn';
+                deleteBtn.className = 'row-action-btn delete-btn';
                 deleteBtn.innerHTML = trashIcon;
                 deleteBtn.title = 'Delete Item';
                 deleteBtn.disabled = this.isLocked;
@@ -1286,7 +1308,27 @@ export class JsonMiller {
                         }, 3000);
                     }
                 };
-                row.appendChild(deleteBtn);
+                if (canRestore) {
+                    const restoreBtn = document.createElement('button');
+                    restoreBtn.className = 'row-action-btn restore-btn';
+                    restoreBtn.innerHTML = restoreIcon;
+                    restoreBtn.title = diffState === 'added' ? 'Undo Addition' : 'Restore Original Value';
+                    restoreBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (this.isLocked) return;
+                        if (diffState === 'added') {
+                            this.deleteValueAt(fullPath);
+                        } else {
+                            const origVal = this.getOriginalValueAt(fullPath);
+                            this.setValueAt(fullPath, JSON.parse(JSON.stringify(origVal)));
+                        }
+                    };
+                    actionsGroup.appendChild(restoreBtn);
+                }
+
+                actionsGroup.appendChild(deleteBtn);
+
+                row.appendChild(actionsGroup);
             }
 
             return row;

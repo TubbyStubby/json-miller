@@ -590,9 +590,75 @@
     }
 }
 
-/* Deletion: Hover-to-Reveal Trash Icon */
-.json-miller-container .delete-btn {
+/* Row Actions: Stacked restore + delete button group */
+.json-miller-container .row-actions {
     position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.json-miller-container .row:hover .row-actions {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Required-row group: always visible (lock always shows) */
+.json-miller-container .row-actions-required {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Lock icon inside group: inline, not absolute */
+.json-miller-container .row-actions-required .lock-icon {
+    position: static;
+    transform: none;
+    opacity: 0.3;
+}
+
+.json-miller-container .row-action-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    opacity: 0.45;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.15s;
+    line-height: 1;
+}
+
+.json-miller-container .row-action-btn:hover {
+    opacity: 1;
+    background: var(--hover);
+}
+
+.json-miller-container .row-action-btn.delete-btn:hover {
+    color: #ef233c;
+}
+
+.json-miller-container .row-action-btn.restore-btn:hover {
+    color: var(--accent);
+}
+
+.json-miller-container .row-action-btn.delete-btn.confirm {
+    opacity: 1;
+    color: #ef233c;
+    animation: shake 0.3s;
+}
+
+/* Removed-state restore button (standalone, no group) */
+.json-miller-container .delete-btn {
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
@@ -605,6 +671,7 @@
     padding: 4px;
     transition: all 0.2s;
     pointer-events: none;
+    margin-top: 4px;
 }
 
 .json-miller-container .row:hover .delete-btn {
@@ -614,13 +681,7 @@
 
 .json-miller-container .delete-btn:hover {
     opacity: 1 !important;
-    color: #ef233c;
-}
-
-.json-miller-container .delete-btn.confirm {
-    opacity: 1 !important;
-    color: #ef233c;
-    animation: shake 0.3s;
+    color: var(--accent);
 }
 
 @keyframes shake {
@@ -665,6 +726,9 @@
     font-size: 0.9rem;
     cursor: not-allowed;
     pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Validation Errors */
