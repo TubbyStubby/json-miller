@@ -84,7 +84,18 @@
                 "city": "New York",
                 "state": "NY",
                 "postalCode": "10001"
-            }
+            },
+            "massiveArray": Array.from({ length: 20000 }, (_, i) => ({
+                id: i,
+                name: `Item ${i}`,
+                isActive: i % 2 === 0,
+                "bigArray": Array.from({ length: 200 }, (_, i) => ({
+                    id: i,
+                    name: `Item ${i}`,
+                    isActive: i % 2 === 0,
+
+                }))
+            }))
         };
     </script>
 </body>

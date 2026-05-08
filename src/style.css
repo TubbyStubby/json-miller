@@ -170,10 +170,23 @@
     border: 1px solid var(--border);
     border-radius: var(--border-radius);
     background: var(--col-bg);
-    overflow-y: auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow);
+}
+
+.json-miller-container .column-viewport {
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
+}
+
+.json-miller-container .column-content {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-sizing: border-box;
 }
 
 .json-miller-container .column-header {

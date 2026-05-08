@@ -18,7 +18,7 @@ export class JsonMiller {
         this.title = config.title || "Miller Column JSON Editor";
         this.data = config.data || {};
         this.originalData = JSON.parse(JSON.stringify(this.data));
-        this._computeDiffs();
+        this.diffMap = new Map();
         this.rootSchema = config.schema || {};
         this.showLockBtn = config.showLockBtn === true;
         this.disableOutput = config.disableOutput === true;
@@ -30,7 +30,7 @@ export class JsonMiller {
         this.isLocked = false;
         this.selectionPath = [];
         this.focusedPath = null;
-        
+
         this.searchQuery = '';
         this.searchResults = [];
         this.searchIndex = -1;
@@ -189,7 +189,7 @@ export class JsonMiller {
     setData(data) {
         this.data = data;
         this.originalData = JSON.parse(JSON.stringify(this.data));
-        this._computeDiffs();
+        this.diffMap = new Map();
         // Reset selection
         this.selectionPath = [];
         this.render();
@@ -204,24 +204,24 @@ export class JsonMiller {
         this.searchResults = [];
         this.searchIndex = -1;
         this.activeSearchPath = null;
-        
+
         if (!query) {
             this.render({ preserveScroll: true });
             return;
         }
-        
+
         const q = this.searchCaseSensitive ? query : query.toLowerCase();
-        
+
         const searchNode = (node, path) => {
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach(key => {
                     const childPath = [...path, Array.isArray(node) ? Number(key) : key];
                     const k = this.searchCaseSensitive ? String(key) : String(key).toLowerCase();
-                    
+
                     if (k.includes(q)) {
                         this.searchResults.push({ path: childPath, isKey: true });
                     }
-                    
+
                     searchNode(node[key], childPath);
                 });
             } else if (node !== undefined && node !== null) {
@@ -231,9 +231,9 @@ export class JsonMiller {
                 }
             }
         };
-        
+
         searchNode(this.data, []);
-        
+
         if (this.searchResults.length > 0) {
             this.searchIndex = 0;
             this._jumpToSearchIndex();
@@ -245,7 +245,7 @@ export class JsonMiller {
 
     _jumpToSearchIndex() {
         if (this.searchIndex < 0 || this.searchIndex >= this.searchResults.length) return;
-        
+
         this.searchCounter.style.display = 'inline';
         this.searchCounter.innerText = `${this.searchIndex + 1} / ${this.searchResults.length}`;
 
@@ -255,13 +255,13 @@ export class JsonMiller {
         this.focusedPath = null;
         this.render();
     }
-    
+
     _nextSearchResult() {
         if (this.searchResults.length === 0) return;
         this.searchIndex = (this.searchIndex + 1) % this.searchResults.length;
         this._jumpToSearchIndex();
     }
-    
+
     _prevSearchResult() {
         if (this.searchResults.length === 0) return;
         this.searchIndex = (this.searchIndex - 1 + this.searchResults.length) % this.searchResults.length;
@@ -285,38 +285,49 @@ export class JsonMiller {
         return true;
     }
 
-    _computeDiffs() {
-        this.diffMap = new Map();
 
-        const compare = (current, original, path) => {
-            const pathStr = JSON.stringify(path);
+    _updateDiffForPath(path) {
+        if (!this.diffMap) this.diffMap = new Map();
+
+        const removePathAndChildren = (pStr) => {
+            const prefix = pStr === '[]' ? '[' : pStr.slice(0, -1) + ',';
+            for (let key of this.diffMap.keys()) {
+                if (key === pStr || key.startsWith(prefix)) {
+                    this.diffMap.delete(key);
+                }
+            }
+        };
+
+        const compare = (current, original, p) => {
+            const pathStr = JSON.stringify(p);
+            removePathAndChildren(pathStr);
 
             if (current === undefined && original !== undefined) {
                 this.diffMap.set(pathStr, 'removed');
-                const markChildrenRemoved = (obj, p) => {
+                const markChildrenRemoved = (obj, childP) => {
                     if (obj && typeof obj === 'object') {
                         Object.keys(obj).forEach(k => {
-                            const childP = [...p, Array.isArray(obj) ? Number(k) : k];
-                            this.diffMap.set(JSON.stringify(childP), 'removed');
-                            markChildrenRemoved(obj[k], childP);
+                            const nextP = [...childP, Array.isArray(obj) ? Number(k) : k];
+                            this.diffMap.set(JSON.stringify(nextP), 'removed');
+                            markChildrenRemoved(obj[k], nextP);
                         });
                     }
                 };
-                markChildrenRemoved(original, path);
+                markChildrenRemoved(original, p);
                 return true;
             }
             if (current !== undefined && original === undefined) {
                 this.diffMap.set(pathStr, 'added');
-                const markChildrenAdded = (obj, p) => {
+                const markChildrenAdded = (obj, childP) => {
                     if (obj && typeof obj === 'object') {
                         Object.keys(obj).forEach(k => {
-                            const childP = [...p, Array.isArray(obj) ? Number(k) : k];
-                            this.diffMap.set(JSON.stringify(childP), 'added');
-                            markChildrenAdded(obj[k], childP);
+                            const nextP = [...childP, Array.isArray(obj) ? Number(k) : k];
+                            this.diffMap.set(JSON.stringify(nextP), 'added');
+                            markChildrenAdded(obj[k], nextP);
                         });
                     }
                 };
-                markChildrenAdded(current, path);
+                markChildrenAdded(current, p);
                 return true;
             }
             if (current === original) return false;
@@ -330,10 +341,10 @@ export class JsonMiller {
             }
 
             let hasDiff = false;
-            const keys = new Set([...Object.keys(current), ...Object.keys(original)]);
+            const keys = new Set([...Object.keys(current || {}), ...Object.keys(original || {})]);
 
             for (let key of keys) {
-                const childPath = [...path, Array.isArray(current) && Array.isArray(original) ? Number(key) : key];
+                const childPath = [...p, Array.isArray(current) && Array.isArray(original) ? Number(key) : key];
                 const childDiff = compare(current[key], original[key], childPath);
                 if (childDiff) hasDiff = true;
             }
@@ -345,7 +356,29 @@ export class JsonMiller {
             return hasDiff;
         };
 
-        compare(this.data, this.originalData, []);
+        const current = this.getValueAt(path);
+        const original = this.getOriginalValueAt(path);
+        compare(current, original, path);
+
+        for (let i = path.length - 1; i >= 0; i--) {
+            const ancestorPath = path.slice(0, i);
+            const ancestorStr = JSON.stringify(ancestorPath);
+            const ancestorPrefix = ancestorPath.length === 0 ? '[' : ancestorStr.slice(0, -1) + ',';
+
+            let ancestorHasDiff = false;
+            for (let diffKey of this.diffMap.keys()) {
+                if (diffKey !== ancestorStr && (ancestorPath.length === 0 || diffKey.startsWith(ancestorPrefix))) {
+                    ancestorHasDiff = true;
+                    break;
+                }
+            }
+
+            if (ancestorHasDiff) {
+                this.diffMap.set(ancestorStr, 'updated');
+            } else {
+                this.diffMap.delete(ancestorStr);
+            }
+        }
     }
 
     setSchema(schema) {
@@ -477,7 +510,7 @@ export class JsonMiller {
             const parent = this.getValueAt(parentPath);
             parent[lastKey] = value;
         }
-        this._computeDiffs();
+        this._updateDiffForPath(path);
         this.render({ preserveScroll: true });
     }
 
@@ -500,7 +533,7 @@ export class JsonMiller {
         } else {
             delete parent[lastKey];
         }
-        this._computeDiffs();
+        this._updateDiffForPath(path);
         this.render({ preserveScroll: true });
     }
 
@@ -639,7 +672,7 @@ export class JsonMiller {
             currentPath.push(key);
             const value = this.getValueAt(currentPath);
             const origValue = this.getOriginalValueAt(currentPath);
-            
+
             const isComplex = (value && typeof value === 'object') || (origValue && typeof origValue === 'object');
 
             if (isComplex) {
@@ -870,7 +903,15 @@ export class JsonMiller {
         }
 
 
-        keys.forEach(key => {
+        const viewport = document.createElement('div');
+        viewport.className = 'column-viewport';
+
+        const content = document.createElement('div');
+        content.className = 'column-content';
+        viewport.appendChild(content);
+        col.appendChild(viewport);
+
+        const createRowElement = (key) => {
             const fullPath = [...path, Array.isArray(dataContext) ? Number(key) : key];
 
             // Auto-populate defaults for missing fields if provided in schema
@@ -1153,11 +1194,11 @@ export class JsonMiller {
                 row.appendChild(lockIcon);
             } else if (diffState === 'removed') {
                 const restoreBtn = document.createElement('button');
-                restoreBtn.className = 'delete-btn'; 
+                restoreBtn.className = 'delete-btn';
                 restoreBtn.innerHTML = restoreIcon;
                 restoreBtn.title = 'Restore Original Value';
                 restoreBtn.disabled = this.isLocked;
-                
+
                 restoreBtn.onclick = (e) => {
                     e.stopPropagation();
                     if (this.isLocked) return;
@@ -1191,50 +1232,93 @@ export class JsonMiller {
                 row.appendChild(deleteBtn);
             }
 
-            col.appendChild(row);
-        });
+            return row;
+        };
 
-        if (!this.isLocked && !Array.isArray(dataContext) && typeof dataContext === 'object') {
-            const schema = this.getSchemaForPath(path);
+        let lastStartIndex = -1;
+        let renderFrame = null;
+        const ROW_HEIGHT = 70;
 
-            const allowsAdditional = !schema || schema.additionalProperties !== false;
+        const renderRows = () => {
+            const scrollTop = viewport.scrollTop;
+            const viewportHeight = viewport.clientHeight || 400;
 
-            if (allowsAdditional) {
-                const addPropBtn = document.createElement('button');
-                addPropBtn.innerText = "+ Custom Property";
-                addPropBtn.className = "add-property-btn";
+            const visibleCount = Math.ceil(viewportHeight / ROW_HEIGHT) + 4;
+            const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - 2);
+            let endIndex = Math.min(keys.length, startIndex + visibleCount);
 
-                addPropBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    const propName = prompt("Enter new custom property name:");
-                    if (propName && !Object.keys(dataContext).includes(propName)) {
-                        const newPath = [...path, propName];
-                        let defaultVal = "";
-                        if (schema && schema.additionalProperties && typeof schema.additionalProperties === 'object') {
-                            defaultVal = this.getDefaultValue(schema.additionalProperties);
-                        }
-                        this.setValueAt(newPath, defaultVal);
-                    }
-                };
-                col.appendChild(addPropBtn);
+            if (keys.length < 50) {
+                if (lastStartIndex === 0) return;
+                lastStartIndex = 0;
+                content.innerHTML = '';
+                content.style.paddingTop = '0px';
+                content.style.paddingBottom = '0px';
+
+                keys.forEach(key => content.appendChild(createRowElement(key)));
+            } else {
+                if (startIndex === lastStartIndex) return;
+                lastStartIndex = startIndex;
+
+                content.innerHTML = '';
+                const paddingTop = startIndex * ROW_HEIGHT;
+                const paddingBottom = Math.max(0, (keys.length - endIndex) * ROW_HEIGHT);
+
+                content.style.paddingTop = `${paddingTop}px`;
+                content.style.paddingBottom = `${paddingBottom}px`;
+
+                const visibleKeys = keys.slice(startIndex, endIndex);
+                visibleKeys.forEach(key => content.appendChild(createRowElement(key)));
             }
-        }
 
-        if (!this.isLocked && Array.isArray(dataContext)) {
-            const addBtn = document.createElement('button');
-            addBtn.innerText = "+ Add Item";
-            addBtn.className = "add-item-btn";
-            addBtn.onclick = () => {
-                const newPath = [...path, dataContext.length];
-                let defaultValue = "";
-                const currentSchema = this.getSchemaForPath(path);
-                if (currentSchema && currentSchema.items) {
-                    defaultValue = this.getDefaultValue(currentSchema.items);
+            if (keys.length < 50 || endIndex === keys.length) {
+                if (!this.isLocked && !Array.isArray(dataContext) && typeof dataContext === 'object') {
+                    const schema = this.getSchemaForPath(path);
+                    const allowsAdditional = !schema || schema.additionalProperties !== false;
+
+                    if (allowsAdditional) {
+                        const addPropBtn = document.createElement('button');
+                        addPropBtn.innerText = "+ Custom Property";
+                        addPropBtn.className = "add-property-btn";
+
+                        addPropBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            const propName = prompt("Enter new custom property name:");
+                            if (propName && !Object.keys(dataContext).includes(propName)) {
+                                const newPath = [...path, propName];
+                                let defaultVal = "";
+                                if (schema && schema.additionalProperties && typeof schema.additionalProperties === 'object') {
+                                    defaultVal = this.getDefaultValue(schema.additionalProperties);
+                                }
+                                this.setValueAt(newPath, defaultVal);
+                            }
+                        };
+                        content.appendChild(addPropBtn);
+                    }
                 }
-                this.setValueAt(newPath, defaultValue);
-            };
-            col.appendChild(addBtn);
-        }
+
+                if (!this.isLocked && Array.isArray(dataContext)) {
+                    const addBtn = document.createElement('button');
+                    addBtn.innerText = "+ Add Item";
+                    addBtn.className = "add-item-btn";
+                    addBtn.onclick = () => {
+                        const newPath = [...path, dataContext.length];
+                        let defaultValue = "";
+                        const currentSchema = this.getSchemaForPath(path);
+                        if (currentSchema && currentSchema.items) {
+                            defaultValue = this.getDefaultValue(currentSchema.items);
+                        }
+                        this.setValueAt(newPath, defaultValue);
+                    };
+                    content.appendChild(addBtn);
+                }
+            }
+        };
+
+        renderRows();
+        viewport.addEventListener('scroll', () => {
+            if (renderFrame) cancelAnimationFrame(renderFrame);
+            renderFrame = requestAnimationFrame(renderRows);
+        });
 
         this.editorContainer.appendChild(col);
     }
