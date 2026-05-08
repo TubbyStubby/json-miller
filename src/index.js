@@ -93,9 +93,7 @@ export class JsonMiller {
                 ${this.showLockBtn ? `<button class="jm-lock-btn" title="Lock/Unlock">
                     ${lockIcon}
                 </button>` : ''}
-                ${this.showJsonEditBtn ? `<button class="jm-json-edit-btn" title="Edit JSON">
-                    ${editIcon}
-                </button>` : ''}
+
                 <button class="jm-copy-btn" title="Copy JSON">
                     ${copyIcon}
                 </button>
@@ -120,7 +118,12 @@ export class JsonMiller {
             <div class="jm-workspace">
                 <div class="jm-editor"></div>
                 ${this.disableOutput ? '' :
-                `<div class="jm-output"></div>`}
+                `<div class="jm-output">
+                    ${this.showJsonEditBtn ? `<button class="jm-json-edit-btn" title="Edit JSON">
+                        ${editIcon}
+                    </button>` : ''}
+                    <div class="jm-output-content"></div>
+                </div>`}
             </div>
         `;
 
@@ -132,12 +135,13 @@ export class JsonMiller {
         this.editorContainer = this.wrapper.querySelector('.jm-editor');
         if (!this.disableOutput) {
             this.outputContainer = this.wrapper.querySelector('.jm-output');
+            this.outputContentContainer = this.wrapper.querySelector('.jm-output-content');
         }
 
         this.themeBtn = this.header.querySelector('.jm-theme-btn');
         this.lockBtn = this.header.querySelector('.jm-lock-btn');
         this.copyBtn = this.header.querySelector('.jm-copy-btn');
-        this.jsonEditBtn = this.header.querySelector('.jm-json-edit-btn');
+        this.jsonEditBtn = this.wrapper.querySelector('.jm-json-edit-btn');
         this.outputToggleBtn = this.header.querySelector('.jm-output-toggle-btn');
 
         this.searchInput = this.header.querySelector('.jm-search-input');
@@ -192,6 +196,13 @@ export class JsonMiller {
         this.diffMap = new Map();
         // Reset selection
         this.selectionPath = [];
+        this.render();
+    }
+
+    updateData(newData) {
+        this.data = newData;
+        this.diffMap = new Map();
+        this._updateDiffForPath([]);
         this.render();
     }
 
@@ -455,25 +466,50 @@ export class JsonMiller {
     toggleJsonEditMode() {
         if (this.isJsonEditMode) {
             // Saving
-            const textarea = this.outputContainer.querySelector('textarea');
+            const textarea = this.outputContentContainer.querySelector('textarea');
             if (textarea) {
-                try {
-                    this.isJsonEditMode = false;
-                    this.jsonEditBtn.innerHTML = editIcon;
-                    this.jsonEditBtn.title = "Edit JSON";
-                    const newData = JSON.parse(textarea.value);
-                    this.setData(newData);
-                } catch (e) {
-                    alert("Invalid JSON: " + e.message);
-                    return; // Stay in edit mode
+                this.jsonEditBtn.style.opacity = '0.5';
+                this.jsonEditBtn.style.pointerEvents = 'none';
+                if (this.outputContentContainer) {
+                    this.outputContentContainer.innerHTML = '<div style="opacity: 0.7; font-style: italic;">Parsing JSON...</div>';
                 }
+
+                setTimeout(() => {
+                    try {
+                        const newData = JSON.parse(textarea.value);
+                        this.isJsonEditMode = false;
+                        this.jsonEditBtn.innerHTML = editIcon;
+                        this.jsonEditBtn.title = "Edit JSON";
+                        this.updateData(newData);
+                    } catch (e) {
+                        alert("Invalid JSON: " + e.message);
+                        if (this.outputContentContainer) {
+                            this.outputContentContainer.innerHTML = '';
+                            this.outputContentContainer.appendChild(textarea);
+                        }
+                    } finally {
+                        this.jsonEditBtn.style.opacity = '1';
+                        this.jsonEditBtn.style.pointerEvents = 'auto';
+                    }
+                }, 10);
             }
         } else {
             // Switching to edit mode
             this.isJsonEditMode = true;
             this.jsonEditBtn.innerHTML = saveIcon;
             this.jsonEditBtn.title = "Save JSON";
-            this.render();
+
+            this.jsonEditBtn.style.opacity = '0.5';
+            this.jsonEditBtn.style.pointerEvents = 'none';
+            if (this.outputContentContainer) {
+                this.outputContentContainer.innerHTML = '<div style="opacity: 0.7; font-style: italic;">Loading...</div>';
+            }
+
+            setTimeout(() => {
+                this.render();
+                this.jsonEditBtn.style.opacity = '1';
+                this.jsonEditBtn.style.pointerEvents = 'auto';
+            }, 10);
         }
     }
 
@@ -691,9 +727,9 @@ export class JsonMiller {
     }
 
     renderJsonTextArea() {
-        this.outputContainer.innerHTML = '';
+        this.outputContentContainer.innerHTML = '';
         const textarea = document.createElement('textarea');
-        textarea.value = JSON.stringify(this.data, null, 2);
+        textarea.placeholder = "Loading JSON...";
         textarea.style.width = '100%';
         textarea.style.height = '100%';
         textarea.style.border = 'none';
@@ -702,26 +738,40 @@ export class JsonMiller {
         textarea.style.color = 'inherit';
         textarea.style.fontFamily = 'monospace';
         textarea.style.outline = 'none';
-        this.outputContainer.appendChild(textarea);
+        this.outputContentContainer.appendChild(textarea);
 
         // Focus and select all? Maybe just focus.
         textarea.focus();
+
+        // Use setTimeout to allow the browser to paint the UI updates before the heavy JSON.stringify and DOM value assignment blocks the thread
+        setTimeout(() => {
+            textarea.value = JSON.stringify(this.data, null, 2);
+        }, 10);
     }
 
     clearOutputArea() {
-        this.outputContainer.innerHTML = '';
+        if (this.outputContentContainer) {
+            this.outputContentContainer.innerHTML = '';
+        }
     }
 
     renderJsonHtml() {
-        this.outputContainer.innerHTML = this.generateJsonHtml(this.data);
+        const state = { count: 0, max: 2000 };
+        if (this.outputContentContainer) {
+            this.outputContentContainer.innerHTML = this.generateJsonHtml(this.data, [], state);
+        }
     }
 
-    generateJsonHtml(data, path = []) {
+    generateJsonHtml(data, path = [], state = { count: 0, max: 2000 }) {
         if (data === null) return `<span class="json-value type-null">null</span>`;
         if (typeof data === 'string') return `<span class="json-value type-string">"${data}"</span>`;
         if (typeof data === 'number') return `<span class="json-value type-number">${data}</span>`;
         if (typeof data === 'boolean') return `<span class="json-value type-boolean">${data}</span>`;
         if (data === undefined) return '';
+
+        if (state.count >= state.max) {
+            return `<span class="json-value type-string" style="color: gray;">"... (truncated for performance)"</span>`;
+        }
 
         const isArray = Array.isArray(data);
         const openChar = isArray ? '[' : '{';
@@ -743,7 +793,14 @@ export class JsonMiller {
         if (keys.length === 0) return `${openChar}${closeChar}`;
 
         let html = `${openChar}\n`;
-        keys.forEach((key, index) => {
+        for (let index = 0; index < keys.length; index++) {
+            if (state.count >= state.max) {
+                html += `<div class="json-line" style="opacity: 0.5;">${'  '.repeat(path.length + 1)}... (${keys.length - index} more omitted)</div>`;
+                break;
+            }
+            state.count++;
+
+            const key = keys[index];
             const currentPath = [...path, isArray ? Number(key) : key];
             const pathStr = JSON.stringify(currentPath);
             const value = data ? data[key] : undefined;
@@ -768,10 +825,10 @@ export class JsonMiller {
             else if (typeof renderValue === 'string') valueHtml = `<span class="json-value type-string">"${renderValue}"</span>`;
             else if (typeof renderValue === 'number') valueHtml = `<span class="json-value type-number">${renderValue}</span>`;
             else if (typeof renderValue === 'boolean') valueHtml = `<span class="json-value type-boolean">${renderValue}</span>`;
-            else valueHtml = this.generateJsonHtml(renderValue, currentPath);
+            else valueHtml = this.generateJsonHtml(renderValue, currentPath, state);
 
             html += `<div class="json-line ${diffClass}" data-path='${pathStr}'>${indent}${keyHtml}${valueHtml}${comma}</div>`;
-        });
+        }
         html += `${'  '.repeat(path.length)}${closeChar}`;
         return html;
     }
