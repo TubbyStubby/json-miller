@@ -559,6 +559,16 @@ export class JsonMiller {
     getEnumOptions(schema) {
         if (!schema) return null;
 
+        const variants = schema.oneOf || schema.anyOf;
+        if (Array.isArray(variants) && variants.some(v => v && v.const !== undefined)) {
+            return variants
+                .filter(v => v && v.const !== undefined)
+                .map(v => ({
+                    value: v.const,
+                    label: v.title !== undefined ? v.title : String(v.const)
+                }));
+        }
+
         if (Array.isArray(schema.enum)) {
             return schema.enum.map(value => ({ value, label: String(value) }));
         }

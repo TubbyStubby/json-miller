@@ -43,8 +43,12 @@
                     "minimum": 0
                 },
                 "status": {
-                    "type": "string",
-                    "enum": ["active", "inactive", "pending"]
+                    "type": "integer",
+                    "oneOf": [
+                        { "const": 0, "title": "inactive" },
+                        { "const": 1, "title": "active" },
+                        { "const": 2, "title": "pending" }
+                    ]
                 },
                 "address": {
                     "type": "object",
