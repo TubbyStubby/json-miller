@@ -556,6 +556,24 @@ export class JsonMiller {
         return typeof value;
     }
 
+    getEnumOptions(schema) {
+        if (!schema) return null;
+
+        if (Array.isArray(schema.enum)) {
+            return schema.enum.map(value => ({ value, label: String(value) }));
+        }
+
+        return null;
+    }
+
+    _valuesEqual(a, b) {
+        if (a === b) return true;
+        if (a && b && typeof a === 'object' && typeof b === 'object') {
+            return JSON.stringify(a) === JSON.stringify(b);
+        }
+        return false;
+    }
+
     deleteValueAt(path) {
         if (this.isLocked) return;
         if (path.length === 0) return; // Cannot delete root
@@ -576,7 +594,8 @@ export class JsonMiller {
     getDefaultValue(schema) {
         if (!schema) return "";
         if (schema.default !== undefined) return schema.default;
-        if (schema.enum && schema.enum.length > 0) return schema.enum[0];
+        const enumOptions = this.getEnumOptions(schema);
+        if (enumOptions && enumOptions.length > 0) return enumOptions[0].value;
 
         const type = Array.isArray(schema.type) ? schema.type[0] : schema.type;
 
@@ -664,11 +683,17 @@ export class JsonMiller {
     getAvailableTypes(schemaNode) {
         if (!schemaNode) return ['string', 'number', 'boolean', 'object', 'array', 'null'];
 
-        if (schemaNode.oneOf) {
-            return schemaNode.oneOf.map(s => s.type);
-        }
         if (schemaNode.type) {
             return Array.isArray(schemaNode.type) ? schemaNode.type : [schemaNode.type];
+        }
+
+        const enumOptions = this.getEnumOptions(schemaNode);
+        if (enumOptions && enumOptions.length > 0) {
+            return [...new Set(enumOptions.map(o => this.getType(o.value)))];
+        }
+
+        if (schemaNode.oneOf) {
+            return schemaNode.oneOf.map(s => s.type).filter(Boolean);
         }
         return ['string']; // Default
     }
@@ -1149,20 +1174,15 @@ export class JsonMiller {
                 const inputWrapper = document.createElement('div');
                 inputWrapper.className = 'input-wrapper';
 
-                if (valueType === 'boolean') {
-                    const cb = document.createElement('input');
-                    cb.type = 'checkbox';
-                    cb.checked = value === undefined ? false : value;
-                    cb.disabled = this.isLocked;
-                    cb.onchange = (e) => this.setValueAt(fullPath, e.target.checked);
-                    cb.style.width = "20px";
-                    cb.style.borderBottom = "none";
-                    inputWrapper.appendChild(cb);
-                } else if (fieldSchema && fieldSchema.enum) {
+                const enumOptions = this.getEnumOptions(fieldSchema);
+
+                if (enumOptions) {
                     const sel = document.createElement('select');
                     sel.disabled = this.isLocked;
 
-                    if (value === undefined) {
+                    const selectedIndex = enumOptions.findIndex(o => this._valuesEqual(o.value, value));
+
+                    if (selectedIndex === -1) {
                         const opt = document.createElement('option');
                         opt.value = "";
                         opt.innerText = "-- Select --";
@@ -1172,15 +1192,24 @@ export class JsonMiller {
                         sel.appendChild(opt);
                     }
 
-                    fieldSchema.enum.forEach(optVal => {
+                    enumOptions.forEach((o, i) => {
                         const opt = document.createElement('option');
-                        opt.value = optVal;
-                        opt.innerText = optVal;
-                        if (optVal === value) opt.selected = true;
+                        opt.value = String(i);
+                        opt.innerText = o.label;
+                        if (i === selectedIndex) opt.selected = true;
                         sel.appendChild(opt);
                     });
-                    sel.onchange = (e) => this.setValueAt(fullPath, e.target.value);
+                    sel.onchange = (e) => this.setValueAt(fullPath, enumOptions[Number(e.target.value)].value);
                     inputWrapper.appendChild(sel);
+                } else if (valueType === 'boolean') {
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.checked = value === undefined ? false : value;
+                    cb.disabled = this.isLocked;
+                    cb.onchange = (e) => this.setValueAt(fullPath, e.target.checked);
+                    cb.style.width = "20px";
+                    cb.style.borderBottom = "none";
+                    inputWrapper.appendChild(cb);
                 } else if (valueType === 'null') {
                     const nullTxt = document.createElement('span');
                     nullTxt.innerText = "null";
