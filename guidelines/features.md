@@ -15,7 +15,7 @@ This document outlines the key features implemented in the JSON Miller Editor.
     -   **Strings**: Text inputs.
     -   **Numbers**: Number inputs.
     -   **Booleans**: Checkboxes.
-    -   **Enums**: Dropdowns (if defined in schema).
+    -   **Enums**: Dropdowns (if defined in schema). Supports labelled options.
 -   **Type Switching**: Ability to change the data type of a field (e.g., from String to Number) using a dropdown/icon selector.
 -   **Array Management**: Add new items to arrays.
 
