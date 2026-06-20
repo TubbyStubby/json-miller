@@ -4,7 +4,7 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import styles from './style.css';
-import { arrowIcon, copyIcon, darkThemeIcon, editIcon, filledLockIcon, lightThemeIcon, lockIcon, saveIcon, tickIcon, trashIcon, unlockIcon, visibilityIcon, visibilityOffIcon, restoreIcon } from './svg';
+import { arrowIcon, copyIcon, darkThemeIcon, editIcon, filledLockIcon, lightThemeIcon, lockIcon, saveIcon, tickIcon, trashIcon, unlockIcon, visibilityIcon, visibilityOffIcon, restoreIcon, goToIcon } from './svg';
 
 export class JsonMiller {
     constructor(container, config = {}) {
@@ -24,6 +24,8 @@ export class JsonMiller {
         this.disableOutput = config.disableOutput === true;
         this.showEditBtn = config.showJsonEditBtn === true;
         this.showOutputToggleBtn = config.showOutputToggleBtn === true;
+        this.showGoToBtn = config.showGoToBtn === true;
+        this.deepLink = config.deepLink === true;
 
         this.isOutputVisible = !this.disableOutput && config.defaultOutputVisible !== false;
         this.isJsonEditMode = false;
@@ -49,6 +51,11 @@ export class JsonMiller {
         // Init AJV
         this._ajv = addFormats(new Ajv({ allErrors: true }));
         this._validateFn = this._ajv.compile(this.rootSchema);
+
+        if (this.deepLink) {
+            this._applyHashPath();
+            window.addEventListener('hashchange', () => this._applyHashPath());
+        }
 
         this.init();
     }
@@ -97,6 +104,9 @@ export class JsonMiller {
                 <button class="jm-copy-btn" title="Copy JSON">
                     ${copyIcon}
                 </button>
+                ${this.showGoToBtn ? `<button class="jm-goto-btn" title="Go to path">
+                    ${goToIcon}
+                </button>` : ''}
                 ${this.showOutputToggleBtn && !this.disableOutput ? `<button class="jm-output-toggle-btn" title="Toggle Output">
                     ${visibilityIcon}
                 </button>` : ''}
@@ -129,6 +139,24 @@ export class JsonMiller {
 
         this.wrapper.appendChild(this.header);
         this.wrapper.appendChild(body);
+
+        const gotoOverlay = document.createElement('div');
+        gotoOverlay.className = 'jm-goto-overlay';
+        gotoOverlay.innerHTML = `
+            <div class="jm-goto-modal">
+                <div class="jm-goto-modal-header">
+                    <span>Go to path</span>
+                    <button class="jm-goto-close" title="Close">✕</button>
+                </div>
+                <div class="jm-goto-modal-body">
+                    <input type="text" class="jm-goto-input" placeholder="e.g. massiveArray[23].bigArray[5].id" spellcheck="false" />
+                    <button class="jm-goto-go">Go</button>
+                </div>
+                <div class="jm-goto-error"></div>
+            </div>
+        `;
+        this.wrapper.appendChild(gotoOverlay);
+
         this.shadowRoot.appendChild(this.wrapper);
 
         this.breadcrumbsContainer = this.wrapper.querySelector('.jm-breadcrumbs');
@@ -143,6 +171,11 @@ export class JsonMiller {
         this.copyBtn = this.header.querySelector('.jm-copy-btn');
         this.jsonEditBtn = this.wrapper.querySelector('.jm-json-edit-btn');
         this.outputToggleBtn = this.header.querySelector('.jm-output-toggle-btn');
+        this.goToBtn = this.header.querySelector('.jm-goto-btn');
+
+        this.gotoOverlay = this.wrapper.querySelector('.jm-goto-overlay');
+        this.gotoInput = this.wrapper.querySelector('.jm-goto-input');
+        this.gotoError = this.wrapper.querySelector('.jm-goto-error');
 
         this.searchInput = this.header.querySelector('.jm-search-input');
         this.searchCaseBtn = this.header.querySelector('.jm-search-case-btn');
@@ -174,6 +207,15 @@ export class JsonMiller {
         this.copyBtn.onclick = () => this.copyJson();
         if (this.jsonEditBtn) this.jsonEditBtn.onclick = () => this.toggleJsonEditMode();
         if (this.outputToggleBtn) this.outputToggleBtn.onclick = () => this.toggleOutput();
+
+        if (this.goToBtn) this.goToBtn.onclick = () => this.openGoToModal();
+        this.gotoOverlay.querySelector('.jm-goto-close').onclick = () => this.closeGoToModal();
+        this.gotoOverlay.querySelector('.jm-goto-go').onclick = () => this._submitGoTo();
+        this.gotoOverlay.onclick = (e) => { if (e.target === this.gotoOverlay) this.closeGoToModal(); };
+        this.gotoInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') this._submitGoTo();
+            else if (e.key === 'Escape') this.closeGoToModal();
+        });
 
         if (this.outputContainer && !this.isOutputVisible) {
             this.outputContainer.classList.add('collapsed');
@@ -469,6 +511,97 @@ export class JsonMiller {
     copyJson() {
         navigator.clipboard.writeText(JSON.stringify(this.data));
         alert("JSON copied to clipboard");
+    }
+
+    _pathToString(path) {
+        let str = '';
+        path.forEach((key, i) => {
+            if (typeof key === 'number') {
+                str += `[${key}]`;
+            } else {
+                if (i > 0) str += '.';
+                str += key;
+            }
+        });
+        return str;
+    }
+
+    _parsePathString(str) {
+        const tokens = [];
+        const trimmed = (str || '').trim().replace(/^ROOT[.>\s]*/i, '');
+        const re = /([^.[\]]+)|\[(\d+)\]/g;
+        let m;
+        while ((m = re.exec(trimmed)) !== null) {
+            tokens.push(m[2] !== undefined ? Number(m[2]) : m[1]);
+        }
+        return tokens;
+    }
+
+    _pathExists(tokens) {
+        let cur = this.data;
+        let orig = this.originalData;
+        for (const tok of tokens) {
+            const curHas = cur != null && typeof cur === 'object' && tok in cur;
+            const origHas = orig != null && typeof orig === 'object' && tok in orig;
+            if (!curHas && !origHas) return false;
+            cur = curHas ? cur[tok] : undefined;
+            orig = origHas ? orig[tok] : undefined;
+        }
+        return true;
+    }
+
+    goToPath(path) {
+        const tokens = Array.isArray(path) ? path : this._parsePathString(path);
+        if (!this._pathExists(tokens)) return false;
+
+        this.selectionPath = tokens;
+        this.focusedPath = null;
+
+        this._revealSelection = true;
+        this.render();
+        return true;
+    }
+
+    openGoToModal() {
+        this.gotoError.textContent = '';
+        this.gotoInput.value = this._pathToString(this.selectionPath);
+        this.gotoOverlay.classList.add('visible');
+        this.gotoInput.focus();
+        this.gotoInput.select();
+    }
+
+    closeGoToModal() {
+        this.gotoOverlay.classList.remove('visible');
+    }
+
+    _submitGoTo() {
+        const value = this.gotoInput.value.trim();
+        if (!value) { this.closeGoToModal(); return; }
+        if (this.goToPath(value)) {
+            this.closeGoToModal();
+        } else {
+            this.gotoError.textContent = 'No such path in this document';
+        }
+    }
+
+    _syncHash() {
+        if (!this.deepLink) return;
+        const str = this._pathToString(this.selectionPath);
+        const url = str ? `#path=${str}` : window.location.pathname + window.location.search;
+        try {
+            history.replaceState(null, '', url);
+        } catch (e) {
+            window.location.hash = str ? `path=${str}` : '';
+        }
+    }
+
+    _applyHashPath() {
+        const m = /#path=(.+)$/.exec(window.location.hash);
+        if (!m) return;
+        const tokens = this._parsePathString(decodeURIComponent(m[1]));
+        if (this._pathExists(tokens) && this._pathToString(tokens) !== this._pathToString(this.selectionPath)) {
+            this.goToPath(tokens);
+        }
     }
 
     toggleJsonEditMode() {
@@ -768,6 +901,7 @@ export class JsonMiller {
         }
 
         this._ensureVisible = null;
+        this._revealSelection = false;
 
         // Handle scrolling
         if (preserveScroll) {
@@ -775,6 +909,8 @@ export class JsonMiller {
         } else {
             this.editorContainer.scrollLeft = this.editorContainer.scrollWidth;
         }
+
+        this._syncHash();
     }
 
     renderJsonTextArea() {
@@ -920,16 +1056,7 @@ export class JsonMiller {
             copyBtn.title = 'Copy Path';
             copyBtn.onclick = (e) => {
                 e.stopPropagation();
-                let pathStr = '';
-                this.selectionPath.forEach((key, i) => {
-                    if (typeof key === 'number') {
-                        pathStr += `[${key}]`;
-                    } else {
-                        if (i > 0) pathStr += '.';
-                        pathStr += key;
-                    }
-                });
-                navigator.clipboard.writeText(pathStr);
+                navigator.clipboard.writeText(this._pathToString(this.selectionPath));
 
                 // Visual feedback
                 const originalIcon = copyBtn.innerHTML;
@@ -1485,11 +1612,14 @@ export class JsonMiller {
 
         const pathKey = JSON.stringify(path);
         let desiredScrollTop = this._columnScrollMap ? (this._columnScrollMap.get(pathKey) || 0) : 0;
+        const vh = viewport.clientHeight || 400;
 
-        if (this._ensureVisible && this._ensureVisible.colPath === pathKey) {
+        if (this._revealSelection && this.selectionPath.length > path.length) {
+            const i = keys.indexOf(String(this.selectionPath[path.length]));
+            if (i !== -1) desiredScrollTop = Math.max(0, i * ROW_HEIGHT - (vh - ROW_HEIGHT) / 2);
+        } else if (this._ensureVisible && this._ensureVisible.colPath === pathKey) {
             const i = keys.indexOf(this._ensureVisible.key);
             if (i !== -1) {
-                const vh = viewport.clientHeight || 400;
                 const rowTop = i * ROW_HEIGHT;
                 const rowBottom = rowTop + ROW_HEIGHT;
                 if (rowTop < desiredScrollTop) desiredScrollTop = rowTop;

@@ -48,6 +48,7 @@
     flex-direction: column;
     height: 100%;
     overflow: hidden;
+    position: relative;
     font-family: "Google Sans Flex", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-variation-settings: "GRAD" 0, "slnt" 0, "wdth" 100, "wght" 400;
     background: var(--bg);
@@ -937,4 +938,97 @@
 .json-miller-container.jm-dark .row.search-highlight {
     background-color: rgba(255, 255, 0, 0.15);
     border-left: 3px solid #fbbc05;
+}
+
+/* Go-to-path modal */
+.json-miller-container .jm-goto-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    z-index: 100;
+}
+
+.json-miller-container .jm-goto-overlay.visible {
+    display: flex;
+}
+
+.json-miller-container .jm-goto-modal {
+    margin-top: 12vh;
+    width: min(560px, 90%);
+    background: var(--col-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+.json-miller-container .jm-goto-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+}
+
+.json-miller-container .jm-goto-close {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    opacity: 0.6;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+    line-height: 1;
+}
+
+.json-miller-container .jm-goto-close:hover {
+    opacity: 1;
+}
+
+.json-miller-container .jm-goto-modal-body {
+    display: flex;
+    gap: 10px;
+    padding: 18px;
+}
+
+.json-miller-container .jm-goto-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text);
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.json-miller-container .jm-goto-go {
+    padding: 0 22px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.json-miller-container .jm-goto-go:hover {
+    background: var(--hover);
+}
+
+.json-miller-container .jm-goto-error {
+    padding: 0 18px 16px;
+    color: var(--accent-active);
+    font-size: 0.85rem;
+    min-height: 0;
+}
+
+.json-miller-container .jm-goto-error:empty {
+    display: none;
 }
