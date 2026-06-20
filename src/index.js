@@ -722,6 +722,12 @@ export class JsonMiller {
         const preserveScroll = options.preserveScroll || false;
         const previousScrollLeft = this.editorContainer.scrollLeft;
 
+        this._columnScrollMap = new Map();
+        this.editorContainer.querySelectorAll('.column').forEach(col => {
+            const viewport = col.querySelector('.column-viewport');
+            if (viewport) this._columnScrollMap.set(col.dataset.path, viewport.scrollTop);
+        });
+
         this.editorContainer.innerHTML = '';
 
         // Update Output JSON
@@ -760,6 +766,8 @@ export class JsonMiller {
                 break;
             }
         }
+
+        this._ensureVisible = null;
 
         // Handle scrolling
         if (preserveScroll) {
@@ -937,6 +945,7 @@ export class JsonMiller {
     renderColumn(path, dataContext, validationErrors = new Set()) {
         const col = document.createElement('div');
         col.className = 'column';
+        col.dataset.path = JSON.stringify(path);
 
         const header = document.createElement('div');
         header.className = 'column-header';
@@ -1288,6 +1297,7 @@ export class JsonMiller {
 
                 this.selectionPath = newPath;
                 this.focusedPath = null;
+                this._ensureVisible = { colPath: JSON.stringify(path), key: String(key) };
                 this.render();
             };
 
@@ -1383,7 +1393,7 @@ export class JsonMiller {
 
         let lastStartIndex = -1;
         let renderFrame = null;
-        const ROW_HEIGHT = 70;
+        let ROW_HEIGHT = 70;
 
         const renderRows = () => {
             const scrollTop = viewport.scrollTop;
@@ -1460,12 +1470,41 @@ export class JsonMiller {
             }
         };
 
+        this.editorContainer.appendChild(col);
         renderRows();
+
+        const sampleRows = content.querySelectorAll('.row');
+        if (sampleRows.length >= 2) {
+            const stride = sampleRows[1].offsetTop - sampleRows[0].offsetTop;
+            if (stride > 0 && stride !== ROW_HEIGHT) {
+                ROW_HEIGHT = stride;
+                lastStartIndex = -1;
+                renderRows();
+            }
+        }
+
+        const pathKey = JSON.stringify(path);
+        let desiredScrollTop = this._columnScrollMap ? (this._columnScrollMap.get(pathKey) || 0) : 0;
+
+        if (this._ensureVisible && this._ensureVisible.colPath === pathKey) {
+            const i = keys.indexOf(this._ensureVisible.key);
+            if (i !== -1) {
+                const vh = viewport.clientHeight || 400;
+                const rowTop = i * ROW_HEIGHT;
+                const rowBottom = rowTop + ROW_HEIGHT;
+                if (rowTop < desiredScrollTop) desiredScrollTop = rowTop;
+                else if (rowBottom > desiredScrollTop + vh) desiredScrollTop = rowBottom - vh;
+            }
+        }
+
+        if (desiredScrollTop > 0) {
+            viewport.scrollTop = desiredScrollTop;
+            renderRows();
+        }
+
         viewport.addEventListener('scroll', () => {
             if (renderFrame) cancelAnimationFrame(renderFrame);
             renderFrame = requestAnimationFrame(renderRows);
         });
-
-        this.editorContainer.appendChild(col);
     }
 }
