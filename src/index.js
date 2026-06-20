@@ -174,6 +174,14 @@ export class JsonMiller {
         this.copyBtn.onclick = () => this.copyJson();
         if (this.jsonEditBtn) this.jsonEditBtn.onclick = () => this.toggleJsonEditMode();
         if (this.outputToggleBtn) this.outputToggleBtn.onclick = () => this.toggleOutput();
+
+        if (this.outputContainer && !this.isOutputVisible) {
+            this.outputContainer.classList.add('collapsed');
+            if (this.outputToggleBtn) {
+                this.outputToggleBtn.innerHTML = visibilityOffIcon;
+                this.outputToggleBtn.title = "Show Output";
+            }
+        }
     }
 
     get ajv() {
