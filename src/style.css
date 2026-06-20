@@ -160,7 +160,7 @@
     scroll-behavior: smooth;
     padding: 20px;
     gap: 15px;
-    justify-content: center;
+    justify-content: safe center;
 }
 
 /* Columns */
